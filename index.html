@@ -1,1 +1,225 @@
-hello
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Hello!</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+        <!-- Don't use this in production: -->
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="text/babel">
+
+            const trackData = {
+                countries: [
+                    {
+                        id: 1,
+                        name: "Suomi",
+                        stages: [
+                            {id: 1, name: "1"},
+                            {id: 2, name: "2"},
+                            {id: 3, name: "3"},
+                        ]
+                    },
+                    {
+                        id: 2,
+                        name: "Monte Carlo",
+                        stages: [
+                            {id: 4, name: "1"},
+                            {id: 5, name: "2"},
+                            {id: 6, name: "3"},
+                        ]
+                    }
+                ],
+                drivers: [
+                    {id: 1, name: "Viljo"},
+                    {id: 2, name: "Veikko"},
+                ],
+            }
+
+            const getDefaultData = () => {
+                const preservedData = localStorage.getItem("data")
+                return preservedData ? JSON.parse(preservedData) : []
+            }
+
+            const preserveData = (data) => {
+                localStorage.setItem("data", JSON.stringify(data)) 
+            }
+
+            const getTime = (stage, driver, data) => {
+                const time = data.find((a) => a.driver === driver && a.stage === stage)
+
+                return time ? time.time : null
+            }
+
+            const getTimeSum = (driver, stages, data) => {
+                const times = data.filter((a) => a.driver === driver && stages.includes(a.stage))
+
+                return times ? times.map(a => a.time).reduce((a, b) => a+b, 0) : null
+            }
+
+            const strToMilliseconds = (str) => {
+                const minutes = str.substring(-5, 2)
+            }
+
+            const addDifferencesAndFormat = (times) => {
+
+                let smallestIndex = null
+                for (let index in times) {
+                    if (times[index] && (!smallestIndex || times[index] < times[smallestIndex])) smallestIndex = index
+                }
+
+                return times.map( (time, index) => {
+                    if (smallestIndex && index != smallestIndex && time) {
+                        const difference = time - times[smallestIndex]
+                        if (!difference) return formatTime(time)
+                        return <>{formatTime(time)} <span className="has-text-danger">{formatDifference(difference)}</span></>
+                    }
+                    return formatTime(time)
+                } )
+            }
+
+            const dataToTables = (data) => {
+
+                const tables = []
+
+                for (let country of trackData.countries) {
+
+                    const headers = ["#"].concat(trackData.drivers.map((driver) => driver.name))
+
+                    const rows = []
+                    for (let stage of country.stages) {
+                        const stageTimes = trackData.drivers.map((driver) => getTime(stage.id, driver.id, data))
+                        rows.push([stage.name].concat(addDifferencesAndFormat(stageTimes)))
+                    }
+
+                    const timeSums = trackData.drivers.map((driver) => getTimeSum(driver.id, country.stages.map(a => a.id), data))
+                    const sums = [<b>⌛️</b>].concat(addDifferencesAndFormat(timeSums))
+
+                    tables.push({id: country.id, header: country.name, headers: headers, rows: rows, sums: sums})
+                }
+
+                return tables
+            }
+
+            const formatTime = (milliseconds, leadingZeros = true) => {
+                if (!milliseconds) return "--"
+                const fullSeconds = Math.floor(milliseconds/1000)
+                const minutes = Math.floor(fullSeconds / 60)
+
+                const seconds = fullSeconds - minutes * 60
+                const millis = milliseconds - fullSeconds * 1000
+
+                let str = ""
+                if (minutes || leadingZeros) str += minutes + ":"
+                str += (seconds < 10 && leadingZeros) ? "0" : ""
+                str += seconds
+                str += "."
+                if (millis < 100) str += "0"
+                if (millis < 10) str += "0"
+                str += millis
+
+                return str
+            }
+
+            const formatDifference = (differenceInMilliseconds) => {
+                const negative = differenceInMilliseconds < 0
+                const formatted = formatTime(negative ? differenceInMilliseconds * -1 : differenceInMilliseconds, false)
+
+                return (negative ? "-" : "+") + formatted
+            }
+
+            function Table({headers, rows, sums, onClick}) {
+                return <table className="table">
+                        <thead>
+                        <tr>
+                            {headers.map((header, index) => <th key={index}>{header}</th>)}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {rows.map((row, rowindex) => {
+                            return <tr key={rowindex}>
+                                {row.map((cell, cellindex) => {
+                                    return <td key={cellindex} onClick={() => onClick(rowindex, cellindex)}>{cell}</td>
+                                })}
+                            </tr>
+                        })}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                {sums.map((cell, index) => <td key={index}>{cell}</td>)}
+                            </tr>
+                        </tfoot>
+                    </table>
+            }
+
+            function ModalInput({ onClose, onSave }) {
+
+                const [value, setValue] = React.useState("")
+
+                return <div className="modal is-active">
+                    <div className="modal-background"></div>
+
+                    <div className="modal-content">
+                        <div className="box">
+                            <p><input className="input" type="text" placeholder="mss000" value={value} onChange={(e) => setValue(e.target.value)}/></p>
+                            <button className="button is-primary mt-4" onClick={() => onSave(value)}>save</button>
+                            <button className="button mt-4" onClick={() => onClose()}>cancel</button>
+                        </div>
+                    </div>
+                    
+                </div>
+            }
+
+            function Main() {
+
+                const [showModal, setShowModal] = React.useState(null)
+                const [data, setData] = React.useState(getDefaultData())
+
+                const tables = dataToTables(data)
+
+                const clicked = (table, row, column) => {
+                    const country = trackData.countries.find( a => a.id === table)
+                    const stage = country.stages[row]
+                    const driver = trackData.drivers[column - 1]
+                    setShowModal({country, stage, driver})
+                }
+
+                const saveValue = (value) => {
+                    const oldTime = data.find(a => a.stage === showModal.stage.id && a.driver === showModal.driver.id)
+
+                    if (oldTime) oldTime.time = parseInt(value, 10)
+                    else data.push({stage: showModal.stage.id, driver: showModal.driver.id, time: parseInt(value, 10)})
+                    setShowModal(null)
+                    setData(JSON.parse(JSON.stringify(data)))
+                    preserveData(data)
+                }
+
+                return <><div className="content">
+                    {tables.map((table) => {
+                        return <div key={table.id} className="py-4 px-3">
+                            <h2 className="is-title-2">{table.header}</h2>
+                            <Table headers={table.headers} rows={table.rows} sums={table.sums} onClick={(row, column) => clicked(table.id, row, column)}/>
+                        </div>
+                    })}
+                </div>
+                { showModal && <ModalInput onClose={() => setShowModal(null)} onSave={(value) => saveValue(value)}/> }
+                </>
+            }
+
+            ReactDOM.render(
+                <Main />,
+                document.getElementById('root')
+            );
+
+        </script>
+    </body>
+
+</html>
