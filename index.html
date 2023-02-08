@@ -23,24 +23,24 @@
                         id: 1,
                         name: "Suomi 🇫🇮",
                         stages: [
-                            {id: 1, name: "1"},
-                            {id: 2, name: "2"},
-                            {id: 3, name: "3"},
+                            {id: 1, name: "1️⃣"},
+                            {id: 2, name: "2️⃣"},
+                            {id: 3, name: "3️⃣"},
                         ]
                     },
                     {
                         id: 2,
                         name: "Monte Carlo 🇫🇷",
                         stages: [
-                            {id: 4, name: "1"},
-                            {id: 5, name: "2"},
-                            {id: 6, name: "3"},
+                            {id: 4, name: "1️⃣"},
+                            {id: 5, name: "2️⃣"},
+                            {id: 6, name: "3️⃣"},
                         ]
                     }
                 ],
                 drivers: [
-                    {id: 1, name: "Viljo"},
-                    {id: 2, name: "Veikko"},
+                    {id: 1, name: "Viljo 👦🏻"},
+                    {id: 2, name: "Veikko 🧔🏻‍♂️"},
                 ],
             }
 
@@ -119,7 +119,7 @@
 
                 let str = ""
                 if (minutes || leadingZeros) str += minutes + ":"
-                str += (seconds < 10 && (leadingZeros || minuted)) ? "0" : ""
+                str += (seconds < 10 && (leadingZeros || minutes)) ? "0" : ""
                 str += seconds
                 str += "."
                 if (millis < 100) str += "0"
