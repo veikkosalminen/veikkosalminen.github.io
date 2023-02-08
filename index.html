@@ -101,7 +101,7 @@
                     }
 
                     const timeSums = trackData.drivers.map((driver) => getTimeSum(driver.id, country.stages.map(a => a.id), data))
-                    const sums = [<b>⌛️</b>].concat(addDifferencesAndFormat(timeSums))
+                    const sums = ["⏱️"].concat(addDifferencesAndFormat(timeSums))
 
                     tables.push({id: country.id, header: country.name, headers: headers, rows: rows, sums: sums})
                 }
