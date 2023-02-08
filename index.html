@@ -119,7 +119,7 @@
 
                 let str = ""
                 if (minutes || leadingZeros) str += minutes + ":"
-                str += (seconds < 10 && leadingZeros) ? "0" : ""
+                str += (seconds < 10 && (leadingZeros || minuted)) ? "0" : ""
                 str += seconds
                 str += "."
                 if (millis < 100) str += "0"
