@@ -36,6 +36,24 @@
                             {id: 5, name: "2️⃣"},
                             {id: 6, name: "3️⃣"},
                         ]
+                    },
+                    {
+                        id: 3,
+                        name: "Wales 🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+                        stages: [
+                            {id: 7, name: "1️⃣"},
+                            {id: 8, name: "2️⃣"},
+                            {id: 9, name: "3️⃣"},
+                        ]
+                    },
+                    {
+                        id: 4,
+                        name: "New England 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+                        stages: [
+                            {id: 10, name: "1️⃣"},
+                            {id: 11, name: "2️⃣"},
+                            {id: 12, name: "3️⃣"},
+                        ]
                     }
                 ],
                 drivers: [
@@ -62,6 +80,8 @@
             const getTimeSum = (driver, stages, data) => {
                 const times = data.filter((a) => a.driver === driver && stages.includes(a.stage))
 
+                if (times && times.find((a) => a.time === -1)) return -1
+
                 return times ? times.map(a => a.time).reduce((a, b) => a+b, 0) : null
             }
 
@@ -73,11 +93,11 @@
 
                 let smallestIndex = null
                 for (let index in times) {
-                    if (times[index] && (!smallestIndex || times[index] < times[smallestIndex])) smallestIndex = index
+                    if (times[index] > 0 && (!smallestIndex || times[index] < times[smallestIndex])) smallestIndex = index
                 }
 
                 return times.map( (time, index) => {
-                    if (smallestIndex && index != smallestIndex && time) {
+                    if (smallestIndex && index != smallestIndex && time > 0) {
                         const difference = time - times[smallestIndex]
                         if (!difference) return formatTime(time)
                         return <>{formatTime(time)} <span className="has-text-danger">{formatDifference(difference)}</span></>
@@ -109,7 +129,42 @@
                 return tables
             }
 
+            const calcPoints = (times) => {
+                let smallestIndex = -1
+                
+                for (let index in times) {
+                    if (times[index] > 0 && (smallestIndex === -1 || times[index] < times[smallestIndex])) smallestIndex = index
+                }
+
+                return times.map( ( time, index ) => {
+                    let points = 0, formatted = ""
+                    if (smallestIndex !== -1 && index == smallestIndex) {
+                        points = 2
+                        formatted = "2 🏆"
+                    }
+                    return {time: time, points: points, formatted: formatted}
+                })
+            }
+
+            const getResults = (data) => {
+                const headers = ["#"].concat(trackData.drivers.map((driver) => driver.name))
+
+                const rows = []
+
+                for (let country of trackData.countries) {
+                    const timeSums = trackData.drivers.map((driver) => getTimeSum(driver.id, country.stages.map(a => a.id), data))
+                    const points = calcPoints(timeSums)
+ 
+                    rows.push([country.name].concat(points.map(a => a.formatted)))
+                }
+
+                const sums = []
+
+                return {headers: headers, rows: rows, sums: sums}
+            }
+
             const formatTime = (milliseconds, leadingZeros = true) => {
+                if (milliseconds === -1) return "🚫"
                 if (!milliseconds) return "--"
                 const fullSeconds = Math.floor(milliseconds/1000)
                 const minutes = Math.floor(fullSeconds / 60)
@@ -136,6 +191,12 @@
                 return (negative ? "-" : "+") + formatted
             }
 
+            const calculateMillisFromInput = (input) => {
+                const minutes = Math.floor(input/100000)
+                const millis = (input - minutes*100000) + minutes * 60 * 1000 
+                return millis
+            }
+
             function Table({headers, rows, sums, onClick}) {
                 return <table className="table">
                         <thead>
@@ -147,7 +208,7 @@
                         {rows.map((row, rowindex) => {
                             return <tr key={rowindex}>
                                 {row.map((cell, cellindex) => {
-                                    return <td key={cellindex} onClick={() => onClick(rowindex, cellindex)}>{cell}</td>
+                                    return <td key={cellindex} onClick={() => onClick && onClick(rowindex, cellindex)}>{cell}</td>
                                 })}
                             </tr>
                         })}
@@ -163,14 +224,25 @@
             function ModalInput({ onClose, onSave }) {
 
                 const [value, setValue] = React.useState("")
+                const [retired, setRetired] = React.useState(false)
+
+                const saveClicked = () => {
+                    if (retired) return onSave(-1)
+                    const millis = calculateMillisFromInput(value)
+                    onSave(millis)
+                }
 
                 return <div className="modal is-active">
                     <div className="modal-background"></div>
 
                     <div className="modal-content">
                         <div className="box">
-                            <p><input className="input" type="number" placeholder="mss000" value={value} onChange={(e) => setValue(e.target.value)}/></p>
-                            <button className="button is-primary mt-4" onClick={() => onSave(value)}>save</button>
+                            {!retired && <p><input className="input" type="number" placeholder="mss000" value={value} onChange={(e) => setValue(e.target.value)}/></p>}
+                            <p><label className="checkbox">
+                                <input type="checkbox" checked={retired} onChange={(e) => setRetired(!retired)} />
+                                Retired
+                                </label></p>
+                            <button className="button is-primary mt-4" onClick={() => saveClicked()}>save</button>
                             <button className="button mt-4" onClick={() => onClose()}>cancel</button>
                         </div>
                     </div>
@@ -184,6 +256,7 @@
                 const [data, setData] = React.useState(getDefaultData())
 
                 const tables = dataToTables(data)
+                const results = getResults(data)
 
                 const clicked = (table, row, column) => {
                     const country = trackData.countries.find( a => a.id === table)
@@ -202,16 +275,20 @@
                     preserveData(data)
                 }
 
-                return <><div className="content">
+                return <div className="content">
                     {tables.map((table) => {
                         return <div key={table.id} className="py-4 px-3">
                             <h2 className="is-title-2">{table.header}</h2>
                             <Table headers={table.headers} rows={table.rows} sums={table.sums} onClick={(row, column) => clicked(table.id, row, column)}/>
                         </div>
                     })}
-                </div>
                 { showModal && <ModalInput onClose={() => setShowModal(null)} onSave={(value) => saveValue(value)}/> }
-                </>
+                    
+                    <div className="py-4 px-3">
+                            <h2 className="is-title-2 has-text-primary">Results</h2>
+                            <Table headers={results.headers} rows={results.rows} sums={results.sums} />
+                    </div>    
+                </div>
             }
 
             ReactDOM.render(
