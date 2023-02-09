@@ -121,7 +121,7 @@
                     }
 
                     const timeSums = trackData.drivers.map((driver) => getTimeSum(driver.id, country.stages.map(a => a.id), data))
-                    const sums = ["⏱️"].concat(addDifferencesAndFormat(timeSums))
+                    const sums = [""].concat(addDifferencesAndFormat(timeSums))
 
                     tables.push({id: country.id, header: country.name, headers: headers, rows: rows, sums: sums})
                 }
@@ -314,7 +314,7 @@
                 { showModal && <ModalInput onClose={() => setShowModal(null)} onSave={(value) => saveValue(value)}/> }
                     
                     <div className="py-4 px-3">
-                            <h2 className="is-title-2 has-text-primary">⏱️</h2>
+                            <hr />
                             <Table headers={results.headers} rows={results.rows} sums={results.sums} />
                     </div>    
                     <div className="py-4 px-3">
