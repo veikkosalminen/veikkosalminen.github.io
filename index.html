@@ -203,6 +203,8 @@
                     if (sums[index] > 0 && (biggestIndex === -1 || sums[index] > sums[biggestIndex])) biggestIndex = index
                 }
 
+                if (biggestIndex === -1) return ""
+
                 return trackData.drivers[biggestIndex - 1].name
             }
 
