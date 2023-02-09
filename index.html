@@ -142,6 +142,14 @@
                         points = 2
                         formatted = "2 🏆"
                     }
+                    else if (time === -1) {
+                        points = 0
+                        formatted = "🚫"
+                    }
+                    else if (time > 0) {
+                        points = 1
+                        formatted = "1 🏁"
+                    }
                     return {time: time, points: points, formatted: formatted}
                 })
             }
@@ -150,17 +158,38 @@
                 const headers = ["#"].concat(trackData.drivers.map((driver) => driver.name))
 
                 const rows = []
+                const pointsCache = []
 
                 for (let country of trackData.countries) {
                     const timeSums = trackData.drivers.map((driver) => getTimeSum(driver.id, country.stages.map(a => a.id), data))
                     const points = calcPoints(timeSums)
  
+                    pointsCache.push(points)
+
                     rows.push([country.name].concat(points.map(a => a.formatted)))
                 }
 
-                const sums = []
+                const sumPoints = pointsCache.reduce( (r, a) => {
+                    a.forEach( (b, i) => {
+                        r[i] = (r[i] || 0) + b.points;
+                    })
+                    return r;
+                }, [])
+
+                const sums = [""].concat(sumPoints)
 
                 return {headers: headers, rows: rows, sums: sums}
+            }
+
+            const getLeader = (sums) => {
+
+                let biggestIndex = -1
+                
+                for (let index in sums) {
+                    if (sums[index] > 0 && (biggestIndex === -1 || sums[index] > sums[biggestIndex])) biggestIndex = index
+                }
+
+                return trackData.drivers[biggestIndex - 1].name
             }
 
             const formatTime = (milliseconds, leadingZeros = true) => {
@@ -287,6 +316,9 @@
                     <div className="py-4 px-3">
                             <h2 className="is-title-2 has-text-primary">Results</h2>
                             <Table headers={results.headers} rows={results.rows} sums={results.sums} />
+                    </div>    
+                    <div className="py-4 px-3">
+                            <h1 className="is-title-1 has-text-centered">🏆 {getLeader(results.sums)}</h1>
                     </div>    
                 </div>
             }
