@@ -343,12 +343,14 @@
             function ModalInput({ onClose, onSave }) {
 
                 const [value, setValue] = React.useState("")
-                const [retired, setRetired] = React.useState(false)
-
+                
                 const saveClicked = () => {
-                    if (retired) return onSave(-1)
                     const millis = calculateMillisFromInput(value)
                     onSave(millis)
+                }
+
+                const onRetire = () => {
+                    onSave(-1)
                 }
 
                 return <div className="modal is-active">
@@ -356,12 +358,9 @@
 
                     <div className="modal-content">
                         <div className="box">
-                            {!retired && <p><input className="input" type="number" placeholder="mss000" value={value} onChange={(e) => setValue(e.target.value)}/></p>}
-                            <p><label className="checkbox">
-                                <input type="checkbox" checked={retired} onChange={(e) => setRetired(!retired)} />
-                                Retired
-                                </label></p>
+                            <p><input className="input" type="number" placeholder="mss000" value={value} onChange={(e) => setValue(e.target.value)}/></p>
                             <button className="button is-primary mt-4" onClick={() => saveClicked()}>save</button>
+                            <button className="button is-danger mt-4" onClick={() => onRetire()}>retire</button>
                             <button className="button mt-4" onClick={() => onClose()}>cancel</button>
                         </div>
                     </div>
