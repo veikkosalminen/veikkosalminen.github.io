@@ -135,6 +135,12 @@
 
             const preserveData = (data) => {
                 localStorage.setItem("data", JSON.stringify(data)) 
+
+                fetch("https://eu-central-1.aws.data.mongodb-api.com/app/rally-qgefr/endpoint/times", {
+                    method: "post",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({times: data})
+                })
             }
 
             const getTime = (stage, driver, data) => {
@@ -292,6 +298,21 @@
                 const minutes = Math.floor(input/100000)
                 const millis = (input - minutes*100000) + minutes * 60 * 1000 
                 return millis
+            }
+
+            const useData = () => {
+
+                const [data, setData] = React.useState(null)
+
+                React.useEffect(async () => {
+                    const response = await fetch("https://eu-central-1.aws.data.mongodb-api.com/app/rally-qgefr/endpoint/times", {
+                        method: "post"
+                    })
+
+                    setData(await response.json())
+                }, [])
+
+                return data
             }
 
             function Table({headers, rows, sums, onClick}) {
