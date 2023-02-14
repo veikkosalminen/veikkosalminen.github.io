@@ -11,11 +11,38 @@
 
         <!-- Don't use this in production: -->
         <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+        <script type="module">
+            // Import the functions you need from the SDKs you need
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+            import { getDatabase, set, ref, onValue } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js'
+            // TODO: Add SDKs for Firebase products that you want to use
+            // https://firebase.google.com/docs/web/setup#available-libraries
+          
+            // Your web app's Firebase configuration
+            const firebaseConfig = {
+              apiKey: "AIzaSyB0TyJJgeLf0aorEFg1UwYGon01-a-suic",
+              authDomain: "perfect-stock-193712.firebaseapp.com",
+              databaseURL: "https://perfect-stock-193712.firebaseio.com",
+              projectId: "perfect-stock-193712",
+              storageBucket: "perfect-stock-193712.appspot.com",
+              messagingSenderId: "436454389671",
+              appId: "1:436454389671:web:dd14398e8280bd8b58e882"
+            };
+          
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+
+            window.firebase = {getDatabase, app, set, ref, onValue}
+
+          </script>
     </head>
 
     <body>
         <div id="root"></div>
         <script type="text/babel">
+
+            const database = window.firebase.getDatabase(window.firebase.app);
 
             const trackData = {
                 countries: [
@@ -109,7 +136,7 @@
                     },
                     {
                         id: 8,
-                        name: "Usa 🇺🇲",
+                        name: "Skotlanti 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
                         stages: [
                             {id: 81, name: "1️⃣"},
                             {id: 82, name: "2️⃣"},
@@ -119,10 +146,6 @@
                             {id: 86, name: "6️⃣"},
                             {id: 87, name: "7️⃣"},
                             {id: 88, name: "8️⃣"},
-                            {id: 89, name: "9️⃣"},
-                            {id: 810, name: "1️⃣0️⃣"},
-                            {id: 811, name: "1️⃣1️⃣"},
-                            {id: 812, name: "1️⃣2️⃣"},
                         ]
                     }
                 ],
@@ -133,17 +156,22 @@
             }
 
             const getDefaultData = () => {
+                return []
                 const preservedData = localStorage.getItem("data")
                 return preservedData ? JSON.parse(preservedData) : []
             }
 
             const preserveData = (data) => {
-                localStorage.setItem("data", JSON.stringify(data)) 
+                /*localStorage.setItem("data", JSON.stringify(data)) 
 
                 fetch("https://eu-central-1.aws.data.mongodb-api.com/app/rally-qgefr/endpoint/times", {
                     method: "post",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({times: data})
+                })*/
+
+                window.firebase.set(window.firebase.ref(database, 'rally'), {
+                    times: data,
                 })
             }
 
@@ -309,6 +337,21 @@
                 const [data, setData] = React.useState(def)
 
                 React.useEffect(async () => {
+                    const countref = window.firebase.ref(database, 'rally');
+                    window.firebase.onValue(countref, (snapshot) => {
+                        const data = snapshot.val();
+                        setData(data ? data.times : [])
+                    });
+                }, [])
+
+                return [data, setData]
+            }
+
+            const _useData = (def) => {
+
+                const [data, setData] = React.useState(def)
+
+                React.useEffect(async () => {
                     const response = await fetch("https://eu-central-1.aws.data.mongodb-api.com/app/rally-qgefr/endpoint/times", {
                         method: "post"
                     })
@@ -393,7 +436,7 @@
                     if (oldTime) oldTime.time = parseInt(value, 10)
                     else data.push({stage: showModal.stage.id, driver: showModal.driver.id, time: parseInt(value, 10)})
                     setShowModal(null)
-                    setData(JSON.parse(JSON.stringify(data)))
+                    //setData(JSON.parse(JSON.stringify(data)))
                     preserveData(data)
                 }
 
