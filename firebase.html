@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Hello!</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+        <!-- Don't use this in production: -->
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+        <script type="module">
+            // Import the functions you need from the SDKs you need
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+            import { getDatabase, set, ref, onValue } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js'
+            // TODO: Add SDKs for Firebase products that you want to use
+            // https://firebase.google.com/docs/web/setup#available-libraries
+          
+            // Your web app's Firebase configuration
+            const firebaseConfig = {
+              apiKey: "AIzaSyB0TyJJgeLf0aorEFg1UwYGon01-a-suic",
+              authDomain: "perfect-stock-193712.firebaseapp.com",
+              databaseURL: "https://perfect-stock-193712.firebaseio.com",
+              projectId: "perfect-stock-193712",
+              storageBucket: "perfect-stock-193712.appspot.com",
+              messagingSenderId: "436454389671",
+              appId: "1:436454389671:web:dd14398e8280bd8b58e882"
+            };
+          
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+
+            window.firebase = {getDatabase, app, set, ref, onValue}
+
+          </script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="text/babel">
+
+            // Initialize Realtime Database and get a reference to the service
+            const database = window.firebase.getDatabase(window.firebase.app);
+
+
+            function Palikka() {
+                const [count, setCount] = React.useState(null)
+
+                React.useEffect(() => {
+                    const starCountRef = window.firebase.ref(database, 'test');
+                    window.firebase.onValue(starCountRef, (snapshot) => {
+                        const data = snapshot.val();
+                        console.log("data", data)
+                        setCount(data ? data.count : 1)
+                    });
+                }, [])
+
+                const saveCount = () => {
+                    window.firebase.set(window.firebase.ref(database, 'test'), {
+                        count: count,
+                    })
+                    setCount(count + 1)
+                }
+
+                return (<>
+                    <h1 className="title is-1">Hello, world! {count}</h1>
+                    <button className="button is-primary" onClick={() => saveCount()}>test</button>
+                </>)
+            }
+
+            ReactDOM.render(
+                <Palikka />,
+                document.getElementById('root')
+            );
+
+        </script>
+    </body>
+
+</html>
