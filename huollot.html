@@ -6,11 +6,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Hello!</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <!--script src="https://veikkosalminen.github.io/react.development.js"></script-->
         <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
         <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
 
         <!-- Don't use this in production: -->
-        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        <script src="https://veikkosalminen.github.io/babel.min.js"></script>
+        <!--script src="https://unpkg.com/@babel/standalone/babel.min.js"></script-->
 
         <script type="module">
             // Import the functions you need from the SDKs you need
@@ -139,9 +141,65 @@
                     </div>
             }
 
+            function Modal({close, save}) {
+
+                const refKm = React.useRef()
+                const refText = React.useRef()
+
+                const onSave = () => {
+                    save({km: refKm.current.value, text: refText.current.value})
+                    close()
+                }
+
+                return <div className="modal is-active">
+                    <div className="modal-background"></div>
+                    <div className="modal-content">
+                        <div className="box">
+                            <div className="field">
+                                <label className="label">Kilometrit</label>
+                                <div className="control">
+                                    <input ref={refKm} className="input" type="number" />
+                                </div>
+                            </div>
+
+                            <div className="field">
+                                <label className="label">Huolto</label>
+                                <div className="control">
+                                    <textarea ref={refText} className="textarea"></textarea>
+                                </div>
+                            </div>
+
+                            <div className="field is-grouped">
+                                <div className="control">
+                                    <button className="button is-link" onClick={() => onSave()}>Tallenna</button>
+                                </div>
+                                <div className="control">
+                                    <button className="button is-link is-light" onClick={() => close()}>Peruuta</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+
+                    
+                </div>
+            }
+
             function Main() {
 
                 const [vehicleId, setVehicleId] = React.useState(1)
+                const [showModal, setShowModal] = React.useState(false)
+                const [services, setServices] = React.useState(_services)
+
+                const addService = (service) => {
+                    const d = new Date()
+                    service.date = d.getDate()  + "." + (d.getMonth()+1) + "." + d.getFullYear()
+
+                    services[vehicleId].unshift(service)
+                    setServices(JSON.parse(JSON.stringify(services)))
+                }
+
+                const list = services[vehicleId]
 
                 return <div className="content p-2">
                     
@@ -150,11 +208,12 @@
                             <SelectCar selected={vehicles.find((a) => a.id === vehicleId).name} select={(vehicleid) => setVehicleId(vehicleid) }/>
                         </div>
                         <div className="column">
-                            <button className="button is-primary is-pulled-right">＋</button>
+                            <button className="button is-primary is-pulled-right" onClick={() => setShowModal(true)}>＋</button>
                         </div>
                     </div>
-                    <Table services={_services[vehicleId]}/>
-                    </div>
+                    <Table services={list}/>
+                    { showModal && <Modal close={() => setShowModal(false)} save={(service) => addService(service)}/> }
+                </div>
             }
 
             ReactDOM.render(
