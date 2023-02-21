@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Hello!</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+        <!-- Don't use this in production: -->
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+        <script type="module">
+            // Import the functions you need from the SDKs you need
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+            import { getDatabase, set, ref, onValue } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js'
+            // TODO: Add SDKs for Firebase products that you want to use
+            // https://firebase.google.com/docs/web/setup#available-libraries
+          
+            // Your web app's Firebase configuration
+            const firebaseConfig = {
+              apiKey: "AIzaSyB0TyJJgeLf0aorEFg1UwYGon01-a-suic",
+              authDomain: "perfect-stock-193712.firebaseapp.com",
+              databaseURL: "https://perfect-stock-193712.firebaseio.com",
+              projectId: "perfect-stock-193712",
+              storageBucket: "perfect-stock-193712.appspot.com",
+              messagingSenderId: "436454389671",
+              appId: "1:436454389671:web:dd14398e8280bd8b58e882"
+            };
+          
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+
+            window.firebase = {getDatabase, app, set, ref, onValue}
+
+          </script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="text/babel">
+
+            const {getDatabase, app, set, ref, onValue} = window.firebase
+
+            // Initialize Realtime Database and get a reference to the service
+            const database = getDatabase(app);
+
+            const vehicles = [
+                {id: 1, name: "Stilo 🚗"},
+                {id: 2, name: "Punto 🚙"},
+            ]
+
+            const _services = {
+                1: [
+                    {date: "19.2.2023", km: "?", text: "aurauskulmat"},
+                ],
+                2: []
+            }
+
+
+            function Palikka() {
+                const [count, setCount] = React.useState(null)
+
+                React.useEffect(() => {
+                    const countref = ref(database, 'test');
+                    onValue(countref, (snapshot) => {
+                        const data = snapshot.val();
+                        setCount(data ? data.count : 1)
+                    });
+                }, [])
+
+                const saveCount = () => {
+                    set(ref(database, 'test'), {
+                        count: count + 1,
+                    })
+                    
+                }
+
+                return (<>
+                    <h1 classNameName="title is-1">Hello, world! {count}</h1>
+                    <button classNameName="button is-primary" onClick={() => saveCount()}>test</button>
+                </>)
+            }
+
+            function Table({services}) {
+                return <table className="table">
+                    <thead>
+                        <tr>
+                        <th>Päiväys</th>
+                        <th>Kilometrit</th>
+                        <th>Huolto</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                    </tfoot>
+                    <tbody>
+                        
+                            {services.map((service, index) => {
+                                return <tr key={index}>
+                                    <td>{service.date}</td>
+                                    <td>{service.km}</td>
+                                    <td>{service.text}</td>
+                                </tr>       
+                            })}
+                                     
+                    </tbody>
+                    </table>
+            }
+
+            function SelectCar({selected, select}) {
+
+                const [isActive, setIsActive] = React.useState(false)
+
+                const clicked = (vehicleid) => {
+                    setIsActive(false)
+                    select(vehicleid)
+                }
+                
+                return <div className={`dropdown ${isActive && "is-active"}`}>
+                    <div className="dropdown-trigger ">
+                        <button className="button is-size-4" aria-haspopup="true" aria-controls="dropdown-menu2" onClick={() => setIsActive(!isActive)}>
+                            <span className="">{selected}</span>
+                            <span className="icon is-small">
+                                ⬇️
+                            </span>
+                        </button>
+                    </div>
+                    <div className="dropdown-menu" id="dropdown-menu2" role="menu">
+                        {vehicles.map((vehicle) => {
+                            return <div className="dropdown-content" key={vehicle.id}>
+                                <a href="#" className="dropdown-item" onClick={() => clicked(vehicle.id)}>
+                                    {vehicle.name}
+                                </a>
+                            </div>
+                        })}
+                    </div>
+                    </div>
+            }
+
+            function Main() {
+
+                const [vehicleId, setVehicleId] = React.useState(1)
+
+                return <div className="content p-2">
+                    
+                    <div className="columns is-mobile">
+                        <div className="column">
+                            <SelectCar selected={vehicles.find((a) => a.id === vehicleId).name} select={(vehicleid) => setVehicleId(vehicleid) }/>
+                        </div>
+                        <div className="column">
+                            <button className="button is-primary is-pulled-right">＋</button>
+                        </div>
+                    </div>
+                    <Table services={_services[vehicleId]}/>
+                    </div>
+            }
+
+            ReactDOM.render(
+                <Main />,
+                document.getElementById('root')
+            );
+
+        </script>
+    </body>
+
+</html>
