@@ -61,29 +61,19 @@
                 2: []
             }
 
+            const useData = (vehicleId) => {
 
-            function Palikka() {
-                const [count, setCount] = React.useState(null)
+                const [data, setData] = React.useState(null)
 
                 React.useEffect(() => {
-                    const countref = ref(database, 'test');
-                    onValue(countref, (snapshot) => {
+                    const dbref = ref(database, 'services/' + vehicleId);
+                    onValue(dbref, (snapshot) => {
                         const data = snapshot.val();
-                        setCount(data ? data.count : 1)
+                        setData(data ? data : [])
                     });
-                }, [])
+                }, [vehicleId])
 
-                const saveCount = () => {
-                    set(ref(database, 'test'), {
-                        count: count + 1,
-                    })
-                    
-                }
-
-                return (<>
-                    <h1 classNameName="title is-1">Hello, world! {count}</h1>
-                    <button classNameName="button is-primary" onClick={() => saveCount()}>test</button>
-                </>)
+                return data
             }
 
             function Table({services}) {
@@ -189,17 +179,17 @@
 
                 const [vehicleId, setVehicleId] = React.useState(1)
                 const [showModal, setShowModal] = React.useState(false)
-                const [services, setServices] = React.useState(_services)
+                
+                const services = useData(vehicleId)
 
                 const addService = (service) => {
                     const d = new Date()
                     service.date = d.getDate()  + "." + (d.getMonth()+1) + "." + d.getFullYear()
 
-                    services[vehicleId].unshift(service)
-                    setServices(JSON.parse(JSON.stringify(services)))
-                }
+                    services.unshift(service)
 
-                const list = services[vehicleId]
+                    set(ref(database, 'services/' + vehicleId), services)
+                }
 
                 return <div className="content p-2">
                     
@@ -211,7 +201,7 @@
                             <button className="button is-primary is-pulled-right" onClick={() => setShowModal(true)}>＋</button>
                         </div>
                     </div>
-                    <Table services={list}/>
+                    {services ? <Table services={services} /> : <progress className="progress is-small is-primary" max="100">15%</progress>}
                     { showModal && <Modal close={() => setShowModal(false)} save={(service) => addService(service)}/> }
                 </div>
             }
