@@ -61,10 +61,10 @@
                     </tbody></table>
             }
 
-            const fillCells = () => {
+            const fillCells = (useLocalStorage = true) => {
 
                 const saved = localStorage.getItem("sudoku")
-                if (saved) {
+                if (useLocalStorage && saved) {
                     return JSON.parse(saved)
                 }
 
@@ -251,12 +251,19 @@
                     const newcells = solve(cells)
                     setCells(JSON.parse(JSON.stringify(newcells)))
                 }
+
+                const clear = () => {
+                    const newcells = fillCells(false)
+                    saveCells(newcells)
+                    setCells(JSON.parse(JSON.stringify(newcells)))
+                }
             
                 return <><div style={{width: "100%"}} className="pt-7 is-flex is-flex-direction-row is-justify-content-center">
                     <Sudoku cells={cells} clicked={(row, col) => clicked(row, col)}/>
                         </div>
                         <div style={{width: "100%"}} className="pt-7 is-flex is-flex-direction-row is-justify-content-center">
                     <button onClick={() => solveNext()}className="button is-primary">Solve</button>
+                    <button onClick={() => clear()}className="button is-danger">Clear</button>
                         </div></>
 
             }
