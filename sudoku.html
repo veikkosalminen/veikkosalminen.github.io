@@ -83,10 +83,14 @@
                 localStorage.setItem("sudoku", JSON.stringify(cells))
             }
 
-            const getNextEmpty = (cells, startCol = 0, startRow = 0) => {
-                for (let col = startCol; col < 9; col++) {
-                    for (let row = startRow; row < 9; row++) {
-                        if (!cells[col][row].value) return [col,row]
+            const getNextEmpty = (cells, startRow = 0, startCol = 0) => {
+                
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9;col++) {
+                        if (col + row * 9 < startCol + startRow * 9) {
+                            continue
+                        }
+                        if (!cells[row][col].value) return [row,col]
                     }
                 }
 
@@ -136,6 +140,14 @@
                 return true
             }
 
+            const testPosition = (cells, row, col, test) => {
+                const isRowOk = testRow(cells, row, col, test)
+                const isColOk = testCol(cells, row, col, test)
+                const isBoxOk = testBox(cells, row, col, test)
+
+                return isRowOk && isColOk && isBoxOk
+            }
+
             const findPossibilities = (cells, row, col) => {
                 const possibilities = []
                 for (let test = 1; test <= 9; test++) {
@@ -166,8 +178,6 @@
                     const [row, col] = next
                     const possibilities = findPossibilities(cells, row, col)
 
-                    console.log(test, next, possibilities)
-                
                     if (possibilities.length === 1 && possibilities[0] === test) {
                         return [row, col]
                     }
@@ -180,14 +190,35 @@
                 return null
             }
 
+            const getCellWithOnlyPlaceInBox = (cells, test) => {
+                
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+
+                        const box = getBoxFor(i * 3, j * 3, false)
+                        const possiblePlaces = []
+                        for (let cell of box) {
+                            const [row, col] = cell
+                            if (!cells[row][col].value && testPosition(cells, row, col, test)) {
+                                possiblePlaces.push(cell)
+                            }
+                        }
+
+                        if (possiblePlaces.length === 1) return possiblePlaces[0]
+                    }
+                }
+
+                return null
+            }
+
             const solve = (cells) => {
 
                 for (let test = 1; test <= 9; test++) {
-                    const foundCell = getCellWithOnePossibility(cells, test)
+                    //const foundCell = getCellWithOnePossibility(cells, test)
+                    const foundCell = getCellWithOnlyPlaceInBox(cells, test)
 
                     if (foundCell) {
                         const [row, col] = foundCell
-                        console.log("set", row, col, test)
                         cells[row][col].value = test
                         break
                     }
