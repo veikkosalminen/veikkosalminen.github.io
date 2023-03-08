@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Sudoku 🏸</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+        <!-- Don't use this in production: -->
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="text/babel">
+
+            function Palikka() {
+                const [count, setCount] = React.useState(0)
+
+                return (<>
+                    <h1 class="title is-1">Hello, world! {count}</h1>
+                    <button className="button is-primary" onClick={() => setCount(count + 1)}>test</button>
+                </>)
+            }
+
+            function Sudoku({cells, clicked}) {
+
+                const size = 40
+
+                const borders = (col, row) => {
+
+                    const normal = "solid lightgrey 1px"
+                    const heavy = "solid black 2px"
+
+                    return {
+                        borderTop: row % 3 === 0 ? heavy : normal,
+                        borderRight: col % 3 === 2 ? heavy : normal,
+                        borderBottom: row % 3 === 2 ? heavy : normal,
+                        borderLeft: col % 3 === 0 ? heavy : normal,
+                    }
+                }
+
+                return <div class="container"><table>
+                    {cells.map( (row, rowindex) => {
+                        return <tr>
+                            {row.map( (cell, colindex) => <td style={borders(colindex, rowindex)}>
+                                <div onClick={() => clicked(rowindex, colindex)} style={{height: size + "px", width: size + "px"}} className="is-size-3 is-flex is-flex-wrap-wrap is-justify-content-center is-align-content-center">
+                                    {cell.value}
+                                </div>
+                            </td>)}
+                        </tr>
+                    })}
+                    </table></div>
+            }
+
+            const fillCells = () => {
+
+                const saved = localStorage.getItem("sudoku")
+                if (saved) {
+                    return JSON.parse(saved)
+                }
+
+                const cells = []
+
+                for (let i = 0; i < 9; i++) {
+                    const row = []
+                    for (let j = 0; j < 9; j++) row.push({value: null})
+                    cells.push(row)
+                }
+
+                return cells
+            }
+
+            const saveCells = (cells) => {
+                localStorage.setItem("sudoku", JSON.stringify(cells))
+            }
+
+            function Main() {
+                const [cells, setCells] = React.useState(fillCells())
+
+                const clicked = (row, col) => {
+                    let newValue = cells[row][col].value ? cells[row][col].value + 1 : 1
+                    cells[row][col].value = newValue < 10 ? newValue : null
+                    saveCells(cells)
+                    setCells(JSON.parse(JSON.stringify(cells)))
+                }
+            
+                return <Sudoku cells={cells} clicked={(row, col) => clicked(row, col)}/>
+            }
+
+            ReactDOM.render(
+                <Main />,
+                document.getElementById('root')
+            );
+
+        </script>
+    </body>
+
+</html>
