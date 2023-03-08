@@ -6,11 +6,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Sudoku 🏸</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
-        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://veikkosalminen.github.io/react.development.js"></script>
         <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
 
         <!-- Don't use this in production: -->
-        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        <script src="https://veikkosalminen.github.io/babel.min.js"></script>
     </head>
 
     <body>
@@ -43,17 +43,22 @@
                     }
                 }
 
-                return <div class="container"><table>
+                const _clicked = (event, row, col) => {
+                    event.preventDefault()
+                    clicked(row, col)
+                }
+
+                return <table><tbody>
                     {cells.map( (row, rowindex) => {
-                        return <tr>
-                            {row.map( (cell, colindex) => <td style={borders(colindex, rowindex)}>
-                                <div onClick={() => clicked(rowindex, colindex)} style={{height: size + "px", width: size + "px"}} className="is-size-3 is-flex is-flex-wrap-wrap is-justify-content-center is-align-content-center">
-                                    {cell.value}
+                        return <tr key={`row_${rowindex}`}>
+                            {row.map( (cell, colindex) => <td key={`cell_${rowindex}_${colindex}`} style={borders(colindex, rowindex)}>
+                                <div onClick={(event) => _clicked(event, rowindex, colindex)} style={{height: size + "px", width: size + "px"}} className="is-size-3 is-flex is-flex-wrap-wrap is-justify-content-center is-align-content-center">
+                                    <span className={`${cell.bold && "has-text-weight-semibold"}`}>{cell.value}</span>
                                 </div>
                             </td>)}
                         </tr>
                     })}
-                    </table></div>
+                    </tbody></table>
             }
 
             const fillCells = () => {
@@ -78,17 +83,142 @@
                 localStorage.setItem("sudoku", JSON.stringify(cells))
             }
 
+            const getNextEmpty = (cells, startCol = 0, startRow = 0) => {
+                for (let col = startCol; col < 9; col++) {
+                    for (let row = startRow; row < 9; row++) {
+                        if (!cells[col][row].value) return [col,row]
+                    }
+                }
+
+                return null
+            }
+
+            const testRow = (cells, row, testCol, test) => {
+                for (let col = 0; col < 9; col++) {
+                    if (col === testCol) continue
+                    if (cells[row][col].value === test) return false
+                }
+
+                return true
+            }
+
+            const testCol = (cells, testRow, col, test) => {
+                for (let row = 0; row < 9; row++) {
+                    if (row === testRow) continue
+                    if (cells[row][col].value === test) return false
+                }
+
+                return true
+            }
+
+            const getBoxFor = (row, col, skipCurrent = true) => {
+                const firstRow = Math.floor(row / 3) * 3
+                const firstCol = Math.floor(col / 3) * 3
+
+                const box = []
+
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (skipCurrent && firstRow + i === row && firstCol + j === col) continue;
+                        box.push([firstRow + i, firstCol + j])
+                    }
+                }
+                return box
+            }
+
+            const testBox = (cells, row, col, test) => {
+                const box = getBoxFor(row, col)
+                
+                for (let cellIndex of box) {
+                    if (cells[cellIndex[0]][cellIndex[1]].value === test) return false
+                }
+
+                return true
+            }
+
+            const findPossibilities = (cells, row, col) => {
+                const possibilities = []
+                for (let test = 1; test <= 9; test++) {
+                    const isRowOk = testRow(cells, row, col, test)
+                    const isColOk = testCol(cells, row, col, test)
+                    const isBoxOk = testBox(cells, row, col, test)
+
+                    if (isRowOk && isColOk && isBoxOk) possibilities.push(test)
+                }
+
+                return possibilities
+            }
+
+            const getNextCell = (row, col) => {
+                col++
+                if (col > 8) {
+                    row++
+                    col = 0
+                }
+                if (row > 8) return null
+                return [row, col]
+            }
+
+            const getCellWithOnePossibility = (cells, test) => {
+                let next = getNextEmpty(cells)
+
+                while (next) {
+                    const [row, col] = next
+                    const possibilities = findPossibilities(cells, row, col)
+
+                    console.log(test, next, possibilities)
+                
+                    if (possibilities.length === 1 && possibilities[0] === test) {
+                        return [row, col]
+                    }
+
+                    const nextOne = getNextCell(row, col)
+                    if (!nextOne) break
+                    next = getNextEmpty(cells, nextOne[0], nextOne[1])
+                }
+
+                return null
+            }
+
+            const solve = (cells) => {
+
+                for (let test = 1; test <= 9; test++) {
+                    const foundCell = getCellWithOnePossibility(cells, test)
+
+                    if (foundCell) {
+                        const [row, col] = foundCell
+                        console.log("set", row, col, test)
+                        cells[row][col].value = test
+                        break
+                    }
+                }
+
+                return cells
+            }
+
             function Main() {
                 const [cells, setCells] = React.useState(fillCells())
 
                 const clicked = (row, col) => {
                     let newValue = cells[row][col].value ? cells[row][col].value + 1 : 1
                     cells[row][col].value = newValue < 10 ? newValue : null
+                    cells[row][col].bold = cells[row][col].value ? true : false
                     saveCells(cells)
                     setCells(JSON.parse(JSON.stringify(cells)))
                 }
+
+                const solveNext = () => {
+                    const newcells = solve(cells)
+                    setCells(JSON.parse(JSON.stringify(newcells)))
+                }
             
-                return <Sudoku cells={cells} clicked={(row, col) => clicked(row, col)}/>
+                return <><div style={{width: "100%"}} className="pt-7 is-flex is-flex-direction-row is-justify-content-center">
+                    <Sudoku cells={cells} clicked={(row, col) => clicked(row, col)}/>
+                        </div>
+                        <div style={{width: "100%"}} className="pt-7 is-flex is-flex-direction-row is-justify-content-center">
+                    <button onClick={() => solveNext()}className="button is-primary">Solve</button>
+                        </div></>
+
             }
 
             ReactDOM.render(
