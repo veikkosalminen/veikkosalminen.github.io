@@ -214,17 +214,26 @@
             const solve = (cells) => {
 
                 for (let test = 1; test <= 9; test++) {
-                    //const foundCell = getCellWithOnePossibility(cells, test)
                     const foundCell = getCellWithOnlyPlaceInBox(cells, test)
 
                     if (foundCell) {
                         const [row, col] = foundCell
                         cells[row][col].value = test
-                        break
+                        return cells
                     }
                 }
 
-                return cells
+                for (let test = 1; test <= 9; test++) {
+                    const foundCell = getCellWithOnePossibility(cells, test)
+
+                    if (foundCell) {
+                        const [row, col] = foundCell
+                        cells[row][col].value = test
+                        return cells
+                    }
+                }
+
+                alert("done")
             }
 
             function Main() {
