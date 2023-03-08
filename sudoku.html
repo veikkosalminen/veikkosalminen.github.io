@@ -61,6 +61,33 @@
                     </tbody></table>
             }
 
+            function Selector({click}) {
+
+                const ClickableTd = ({click, number}) => {
+                    return <td style={{border: "solid black 2px"}}>
+                            <div onClick={() => click(number)} style={{height: "120px", width: "120px"}} className="is-size-1 is-flex is-flex-wrap-wrap is-justify-content-center is-align-content-center">{number}</div>
+                        </td>
+                }
+
+                return <table><tbody>
+                    <tr>
+                        <ClickableTd click={click} number={1} />
+                        <ClickableTd click={click} number={2} />
+                        <ClickableTd click={click} number={3} />
+                    </tr>
+                    <tr>
+                        <ClickableTd click={click} number={4} />
+                        <ClickableTd click={click} number={5} />
+                        <ClickableTd click={click} number={6} />
+                    </tr>
+                    <tr>
+                        <ClickableTd click={click} number={7} />
+                        <ClickableTd click={click} number={8} />
+                        <ClickableTd click={click} number={9} />
+                    </tr>
+                    </tbody></table>
+            }
+
             const fillCells = (useLocalStorage = true) => {
 
                 const saved = localStorage.getItem("sudoku")
@@ -238,13 +265,19 @@
 
             function Main() {
                 const [cells, setCells] = React.useState(fillCells())
+                const [showSelector, setShowSelector] = React.useState(false)
 
                 const clicked = (row, col) => {
-                    let newValue = cells[row][col].value ? cells[row][col].value + 1 : 1
-                    cells[row][col].value = newValue < 10 ? newValue : null
-                    cells[row][col].bold = cells[row][col].value ? true : false
+                    setShowSelector([row, col])
+                }
+
+                const selected = (value) => {
+                    const [row, col] = showSelector
+                    cells[row][col].value = value
+                    cells[row][col].bold = true
                     saveCells(cells)
                     setCells(JSON.parse(JSON.stringify(cells)))
+                    setShowSelector(false)
                 }
 
                 const solveNext = () => {
@@ -259,7 +292,9 @@
                 }
             
                 return <><div style={{width: "100%"}} className="pt-7 is-flex is-flex-direction-row is-justify-content-center">
-                    <Sudoku cells={cells} clicked={(row, col) => clicked(row, col)}/>
+                    {showSelector ? <Selector click={(value) => selected(value)}/>
+                        : <Sudoku cells={cells} clicked={(row, col) => clicked(row, col)}/>
+                        }
                         </div>
                         <div style={{width: "100%"}} className="pt-7 is-flex is-flex-direction-row is-justify-content-center">
                     <button onClick={() => solveNext()}className="button is-primary">Solve</button>
