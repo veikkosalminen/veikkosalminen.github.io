@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Sudoku 🏸</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <script src="https://veikkosalminen.github.io/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+        <!-- Don't use this in production: -->
+        <script src="https://veikkosalminen.github.io/babel.min.js"></script>
+
+        <script type="module">
+            // Import the functions you need from the SDKs you need
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+            import { getDatabase, set, ref, onValue } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js'
+            // TODO: Add SDKs for Firebase products that you want to use
+            // https://firebase.google.com/docs/web/setup#available-libraries
+          
+            // Your web app's Firebase configuration
+            const firebaseConfig = {
+              apiKey: "AIzaSyB0TyJJgeLf0aorEFg1UwYGon01-a-suic",
+              authDomain: "perfect-stock-193712.firebaseapp.com",
+              databaseURL: "https://perfect-stock-193712.firebaseio.com",
+              projectId: "perfect-stock-193712",
+              storageBucket: "perfect-stock-193712.appspot.com",
+              messagingSenderId: "436454389671",
+              appId: "1:436454389671:web:dd14398e8280bd8b58e882"
+            };
+          
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+
+            window.firebase = {getDatabase, app, set, ref, onValue}
+
+          </script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="text/babel">
+
+            const {getDatabase, app, set, ref, onValue} = window.firebase
+
+            // Initialize Realtime Database and get a reference to the service
+            const database = getDatabase(app);
+
+            const gameBase = JSON.parse('[[{"value":8},{"value":7,"bold":true},{"value":4},{"value":1},{"value":6,"bold":true},{"value":2,"bold":true},{"value":9},{"value":3,"bold":true},{"value":5,"bold":true}],[{"value":3,"bold":true},{"value":2},{"value":6},{"value":5,"bold":true},{"value":9},{"value":8},{"value":1,"bold":true},{"value":7},{"value":4}],[{"value":1},{"value":9,"bold":true},{"value":5},{"value":4},{"value":7,"bold":true},{"value":3},{"value":8},{"value":2,"bold":true},{"value":6}],[{"value":6},{"value":4,"bold":true},{"value":3},{"value":8,"bold":true},{"value":1,"bold":true},{"value":9,"bold":true},{"value":2,"bold":true},{"value":5},{"value":7}],[{"value":5,"bold":true},{"value":8,"bold":true},{"value":2},{"value":6,"bold":true},{"value":4,"bold":true},{"value":7},{"value":3},{"value":9},{"value":1,"bold":true}],[{"value":9},{"value":1},{"value":7},{"value":3,"bold":true},{"value":2},{"value":5,"bold":true},{"value":4},{"value":6},{"value":8}],[{"value":4,"bold":true},{"value":5},{"value":8,"bold":true},{"value":9,"bold":true},{"value":3},{"value":6},{"value":7},{"value":1,"bold":true},{"value":2,"bold":true}],[{"value":7,"bold":true},{"value":3},{"value":1},{"value":2,"bold":true},{"value":5,"bold":true},{"value":4},{"value":6},{"value":8,"bold":true},{"value":9}],[{"value":2},{"value":6},{"value":9},{"value":7},{"value":8},{"value":1},{"value":5,"bold":true},{"value":4},{"value":3,"bold":true}]]')
+
+            const getPlayerColor = (id, players) => {
+                const currentUser = JSON.parse(localStorage.getItem("user"))
+                if (currentUser.id === id) return "hsl(206, 70%, 96%)"
+                if (id) return "hsl(347, 90%, 96%)"
+            }
+
+            function Sudoku({cells, players, clicked}) {
+
+                const size = 40
+
+                const borders = (col, row) => {
+
+                    const normal = "solid lightgrey 1px"
+                    const heavy = "solid black 2px"
+
+                    return {
+                        borderTop: row % 3 === 0 ? heavy : normal,
+                        borderRight: col % 3 === 2 ? heavy : normal,
+                        borderBottom: row % 3 === 2 ? heavy : normal,
+                        borderLeft: col % 3 === 0 ? heavy : normal,
+                    }
+                }
+
+                const _clicked = (event, row, col) => {
+                    event.preventDefault()
+                    clicked(row, col)
+                }
+
+                return <table><tbody>
+                    {cells.map( (row, rowindex) => {
+                        return <tr key={`row_${rowindex}`}>
+                            {row.map( (cell, colindex) => <td key={`cell_${rowindex}_${colindex}`} style={borders(colindex, rowindex)}>
+                                <div onClick={(event) => _clicked(event, rowindex, colindex)} style={{height: size + "px", width: size + "px", backgroundColor: getPlayerColor(cell.user, players)}} className="is-size-3 is-flex is-flex-wrap-wrap is-justify-content-center is-align-content-center">
+                                    <span className={`${cell.bold && "has-text-weight-semibold"}`}>{cell.value}</span>
+                                </div>
+                            </td>)}
+                        </tr>
+                    })}
+                    </tbody></table>
+            }
+
+            function Selector({click}) {
+
+                const ClickableTd = ({click, number}) => {
+                    return <td style={{border: "solid black 2px"}}>
+                            <div onClick={() => click(number)} style={{height: "120px", width: "120px"}} className="is-size-1 is-flex is-flex-wrap-wrap is-justify-content-center is-align-content-center">{number}</div>
+                        </td>
+                }
+
+                return <table><tbody>
+                    <tr>
+                        <ClickableTd click={click} number={1} />
+                        <ClickableTd click={click} number={2} />
+                        <ClickableTd click={click} number={3} />
+                    </tr>
+                    <tr>
+                        <ClickableTd click={click} number={4} />
+                        <ClickableTd click={click} number={5} />
+                        <ClickableTd click={click} number={6} />
+                    </tr>
+                    <tr>
+                        <ClickableTd click={click} number={7} />
+                        <ClickableTd click={click} number={8} />
+                        <ClickableTd click={click} number={9} />
+                    </tr>
+                    </tbody></table>
+            }
+
+            const sudokuEvery = (cells, func) => {
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        cells[i][j] = func(cells[i][j])
+                    }
+                }
+            }
+
+            const fillCells = (useLocalStorage = true) => {
+                const copy = JSON.parse(JSON.stringify(gameBase))
+                sudokuEvery(copy, (cell) => {
+                    if (cell.bold) return cell
+                    return {value: null, correct: cell.value}
+                })
+
+                return copy
+            }
+
+            const saveCells = (cells) => {
+                localStorage.setItem("sudoku", JSON.stringify(cells))
+            }
+
+            const getNextEmpty = (cells, startRow = 0, startCol = 0) => {
+                
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9;col++) {
+                        if (col + row * 9 < startCol + startRow * 9) {
+                            continue
+                        }
+                        if (!cells[row][col].value) return [row,col]
+                    }
+                }
+
+                return null
+            }
+
+            const testRow = (cells, row, testCol, test) => {
+                for (let col = 0; col < 9; col++) {
+                    if (col === testCol) continue
+                    if (cells[row][col].value === test) return false
+                }
+
+                return true
+            }
+
+            const testCol = (cells, testRow, col, test) => {
+                for (let row = 0; row < 9; row++) {
+                    if (row === testRow) continue
+                    if (cells[row][col].value === test) return false
+                }
+
+                return true
+            }
+
+            const getBoxFor = (row, col, skipCurrent = true) => {
+                const firstRow = Math.floor(row / 3) * 3
+                const firstCol = Math.floor(col / 3) * 3
+
+                const box = []
+
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (skipCurrent && firstRow + i === row && firstCol + j === col) continue;
+                        box.push([firstRow + i, firstCol + j])
+                    }
+                }
+                return box
+            }
+
+            const testBox = (cells, row, col, test) => {
+                const box = getBoxFor(row, col)
+                
+                for (let cellIndex of box) {
+                    if (cells[cellIndex[0]][cellIndex[1]].value === test) return false
+                }
+
+                return true
+            }
+
+            const testPosition = (cells, row, col, test) => {
+                const isRowOk = testRow(cells, row, col, test)
+                const isColOk = testCol(cells, row, col, test)
+                const isBoxOk = testBox(cells, row, col, test)
+
+                return isRowOk && isColOk && isBoxOk
+            }
+
+            const findPossibilities = (cells, row, col) => {
+                const possibilities = []
+                for (let test = 1; test <= 9; test++) {
+                    const isRowOk = testRow(cells, row, col, test)
+                    const isColOk = testCol(cells, row, col, test)
+                    const isBoxOk = testBox(cells, row, col, test)
+
+                    if (isRowOk && isColOk && isBoxOk) possibilities.push(test)
+                }
+
+                return possibilities
+            }
+
+            const getNextCell = (row, col) => {
+                col++
+                if (col > 8) {
+                    row++
+                    col = 0
+                }
+                if (row > 8) return null
+                return [row, col]
+            }
+
+            const getCellWithOnePossibility = (cells, test) => {
+                let next = getNextEmpty(cells)
+
+                while (next) {
+                    const [row, col] = next
+                    const possibilities = findPossibilities(cells, row, col)
+
+                    if (possibilities.length === 1 && possibilities[0] === test) {
+                        return [row, col]
+                    }
+
+                    const nextOne = getNextCell(row, col)
+                    if (!nextOne) break
+                    next = getNextEmpty(cells, nextOne[0], nextOne[1])
+                }
+
+                return null
+            }
+
+            const getCellWithOnlyPlaceInBox = (cells, test) => {
+                
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+
+                        const box = getBoxFor(i * 3, j * 3, false)
+                        const possiblePlaces = []
+                        for (let cell of box) {
+                            const [row, col] = cell
+                            if (!cells[row][col].value && testPosition(cells, row, col, test)) {
+                                possiblePlaces.push(cell)
+                            }
+                        }
+
+                        if (possiblePlaces.length === 1) return possiblePlaces[0]
+                    }
+                }
+
+                return null
+            }
+
+            const getCorrect = (cells) => {
+                for (let test = 1; test <= 9; test++) {
+                    const foundCell = getCellWithOnlyPlaceInBox(cells, test)
+
+                    if (foundCell) {
+                        const [row, col] = foundCell
+                        return [row, col, test]
+                    }
+                }
+
+                for (let test = 1; test <= 9; test++) {
+                    const foundCell = getCellWithOnePossibility(cells, test)
+
+                    if (foundCell) {
+                        const [row, col] = foundCell
+                        return [row, col, test]
+                    }
+                }
+
+                return null
+            }
+
+            const solve = (cells) => {
+
+                for (let test = 1; test <= 9; test++) {
+                    const foundCell = getCellWithOnlyPlaceInBox(cells, test)
+
+                    if (foundCell) {
+                        const [row, col] = foundCell
+                        cells[row][col].value = test
+                        return cells
+                    }
+                }
+
+                for (let test = 1; test <= 9; test++) {
+                    const foundCell = getCellWithOnePossibility(cells, test)
+
+                    if (foundCell) {
+                        const [row, col] = foundCell
+                        cells[row][col].value = test
+                        return cells
+                    }
+                }
+
+                alert("done")
+            }
+
+            function Results({players, cells}) {
+                const pointsByPlayer = {}
+
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        const cell = cells[i][j]
+                        const player = cell.user
+                        if (!pointsByPlayer[player]) pointsByPlayer[player] = 0
+                        pointsByPlayer[player]++
+                    }
+                }
+
+                const playerKeys = Object.keys(players)
+                const points = playerKeys.map( (id) => {
+                    return {user: players[id].username, points: pointsByPlayer[id] || 0}
+                })
+                return <div className="pt-4">
+                    <table className="table">
+                        <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Points</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {points.map((row, rowindex) => {
+                            return <tr key={rowindex}>
+                                <td>{row.user}</td>
+                                <td>{row.points}</td>
+                            </tr>
+                        })}
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            function GameMain({user}) {
+                const [cells, setCells] = React.useState(fillCells())
+                const [players, setPlayers] = React.useState([])
+                const [showSelector, setShowSelector] = React.useState(false)
+
+                const clicked = (row, col) => {
+                    setShowSelector([row, col])
+                }
+
+                const selected = (value) => {
+                    setShowSelector(false)
+                    const [row, col] = showSelector
+
+                    if (cells[row][col].correct !== value) {
+                        alert("väärin")
+                        return
+                    }
+                    cells[row][col].value = value
+                    cells[row][col].user = user.id
+                    set(ref(database, 'sudoku/game'), cells)
+                }
+
+                const solveNext = () => {
+                    const answer = getCorrect(cells)
+                    if (!answer) return
+                    const [row, col, value] = answer
+                    cells[row][col].value = value
+                    cells[row][col].user = user.id
+                    set(ref(database, 'sudoku/game'), cells)
+                }
+
+                const clear = () => {
+                    const newcells = fillCells(false)
+                    set(ref(database, 'sudoku/game'), newcells)
+                }
+
+                const exportGame = () => {
+                    console.log(JSON.stringify(cells))
+                }
+
+                React.useEffect(() => {
+                    const countref = ref(database, 'sudoku/game');
+                    onValue(countref, (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) setCells(data)
+                    });
+
+                    const userref = ref(database, 'sudoku/players');
+                    onValue(userref, (snapshot) => {
+                        const data = snapshot.val();
+                        if (data) setPlayers(data)
+                    });
+                }, [])
+            
+                return <><div style={{width: "100vw", height: "100vh"}} className="pt-7 is-flex is-flex-wrap-wrap is-flex-direction-column is-justify-content-center is-align-content-center">
+                    {showSelector ? <Selector click={(value) => selected(value)}/>
+                        : <Sudoku cells={cells} players={players} clicked={(row, col) => clicked(row, col)}/>
+                        }
+                       
+                        {/*<div className="is-flex is-justify-content-space-between pt-4">
+                            
+                                <button onClick={() => solveNext()}className="button is-primary">Solve</button>
+                                <button onClick={() => clear()}className="button is-danger">Clear</button>
+                                <button onClick={() => exportGame()}className="button">Export</button>
+                            
+                        </div>*/}
+
+                        <Results players={players} cells={cells} />
+                    
+                        </div></>
+
+            }
+
+            function GetUser({userCreated}) {
+
+                const userref = React.useRef()
+
+                const createUser = () => {
+                    const username = userref.current.value
+                    const user = {
+                        username: username,
+                        id: Math.floor(Math.random() * 10000),
+                        color: "hsl(347, 90%, 96%)", // danger-light
+                        //color: "hsl(206, 70%, 96%)", // info-light
+                    }
+                    localStorage.setItem("user", JSON.stringify(user))
+                    set(ref(database, 'sudoku/players/' + user.id), user)
+                    userCreated(user)
+                }
+
+                return <div class="container"><div class="field">
+                    <label className="label">Name</label>
+                    <div className="control">
+                        <input ref={userref} className="input" type="text" />
+                    </div>
+                </div>
+
+                
+                <div className="field is-grouped">
+                    <div className="control">
+                        <button className="button is-link" onClick={() => createUser()}>Submit</button>
+                    </div>
+                </div></div>
+            }
+
+            function Main() {
+                const [user, setUser] = React.useState(JSON.parse(localStorage.getItem("user") || "null"))
+
+                if (user) return <GameMain user={user} />
+                else return <GetUser userCreated={(user) => setUser(user)}/>
+            }
+
+            ReactDOM.render(
+                <Main />,
+                document.getElementById('root')
+            );
+
+        </script>
+    </body>
+
+</html>
