@@ -404,7 +404,7 @@
                     });
                 }, [])
             
-                return <><div style={{width: "100vw", height: "100vh"}} className="pt-7 is-flex is-flex-wrap-wrap is-flex-direction-column is-justify-content-center is-align-content-center">
+                return <div style={{width: "100vw", height: "100vh"}} className="pt-7 is-flex is-flex-wrap-wrap is-flex-direction-column is-justify-content-center is-align-content-center">
                     {showSelector ? <Selector click={(value) => selected(value)}/>
                         : <Sudoku cells={cells} players={players} clicked={(row, col) => clicked(row, col)}/>
                         }
@@ -419,7 +419,7 @@
 
                         <Results players={players} cells={cells} />
                     
-                        </div></>
+                        </div>
 
             }
 
@@ -440,19 +440,22 @@
                     userCreated(user)
                 }
 
-                return <div class="container"><div class="field">
-                    <label className="label">Name</label>
-                    <div className="control">
-                        <input ref={userref} className="input" type="text" />
+                return <div style={{width: "100vw", height: "100vh"}} className="p-5 is-flex is-flex-direction-column is-justify-content-center is-align-content-center">
+                    <div class="field">
+                        <label className="label">Name</label>
+                        <div className="control">
+                            <input ref={userref} className="input" type="text" />
+                        </div>
+                    </div>
+
+                    
+                    <div className="field is-grouped">
+                        <div className="control">
+                            <button className="button is-link" onClick={() => createUser()}>Submit</button>
+                        </div>
                     </div>
                 </div>
-
                 
-                <div className="field is-grouped">
-                    <div className="control">
-                        <button className="button is-link" onClick={() => createUser()}>Submit</button>
-                    </div>
-                </div></div>
             }
 
             function Main() {
