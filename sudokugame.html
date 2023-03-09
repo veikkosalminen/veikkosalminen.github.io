@@ -47,7 +47,7 @@
             // Initialize Realtime Database and get a reference to the service
             const database = getDatabase(app);
 
-            const gameBase = JSON.parse('[[{"value":8},{"value":7,"bold":true},{"value":4},{"value":1},{"value":6,"bold":true},{"value":2,"bold":true},{"value":9},{"value":3,"bold":true},{"value":5,"bold":true}],[{"value":3,"bold":true},{"value":2},{"value":6},{"value":5,"bold":true},{"value":9},{"value":8},{"value":1,"bold":true},{"value":7},{"value":4}],[{"value":1},{"value":9,"bold":true},{"value":5},{"value":4},{"value":7,"bold":true},{"value":3},{"value":8},{"value":2,"bold":true},{"value":6}],[{"value":6},{"value":4,"bold":true},{"value":3},{"value":8,"bold":true},{"value":1,"bold":true},{"value":9,"bold":true},{"value":2,"bold":true},{"value":5},{"value":7}],[{"value":5,"bold":true},{"value":8,"bold":true},{"value":2},{"value":6,"bold":true},{"value":4,"bold":true},{"value":7},{"value":3},{"value":9},{"value":1,"bold":true}],[{"value":9},{"value":1},{"value":7},{"value":3,"bold":true},{"value":2},{"value":5,"bold":true},{"value":4},{"value":6},{"value":8}],[{"value":4,"bold":true},{"value":5},{"value":8,"bold":true},{"value":9,"bold":true},{"value":3},{"value":6},{"value":7},{"value":1,"bold":true},{"value":2,"bold":true}],[{"value":7,"bold":true},{"value":3},{"value":1},{"value":2,"bold":true},{"value":5,"bold":true},{"value":4},{"value":6},{"value":8,"bold":true},{"value":9}],[{"value":2},{"value":6},{"value":9},{"value":7},{"value":8},{"value":1},{"value":5,"bold":true},{"value":4},{"value":3,"bold":true}]]')
+            const gameBase = JSON.parse('[[{"value":2},{"value":7},{"value":5,"bold":true},{"value":9},{"value":1},{"value":8},{"value":6,"bold":true},{"value":4},{"value":3}],[{"value":9},{"value":6},{"value":8},{"value":5},{"value":4},{"value":3},{"value":7,"bold":true},{"value":2},{"value":1,"bold":true}],[{"value":4,"bold":true},{"value":3,"bold":true},{"value":1,"bold":true},{"value":2},{"value":7},{"value":6,"bold":true},{"value":5,"bold":true},{"value":8,"bold":true},{"value":9}],[{"value":1},{"value":5},{"value":6,"bold":true},{"value":4},{"value":2},{"value":7},{"value":3},{"value":9},{"value":8,"bold":true}],[{"value":7,"bold":true},{"value":2,"bold":true},{"value":3},{"value":6,"bold":true},{"value":8},{"value":9},{"value":1,"bold":true},{"value":5},{"value":4}],[{"value":8},{"value":4,"bold":true},{"value":9,"bold":true},{"value":1},{"value":3,"bold":true},{"value":5},{"value":2,"bold":true},{"value":7,"bold":true},{"value":6}],[{"value":5},{"value":8},{"value":2},{"value":3,"bold":true},{"value":6,"bold":true},{"value":4,"bold":true},{"value":9},{"value":1},{"value":7}],[{"value":6,"bold":true},{"value":9,"bold":true},{"value":7},{"value":8},{"value":5,"bold":true},{"value":1,"bold":true},{"value":4,"bold":true},{"value":3},{"value":2,"bold":true}],[{"value":3},{"value":1},{"value":4},{"value":7,"bold":true},{"value":9},{"value":2},{"value":8},{"value":6},{"value":5}]]')
 
             const getPlayerColor = (id, players) => {
                 const currentUser = JSON.parse(localStorage.getItem("user"))
@@ -356,6 +356,7 @@
                 const [showSelector, setShowSelector] = React.useState(false)
 
                 const clicked = (row, col) => {
+                    if (cells[row][col].value) return
                     setShowSelector([row, col])
                 }
 
@@ -432,8 +433,6 @@
                     const user = {
                         username: username,
                         id: Math.floor(Math.random() * 10000),
-                        color: "hsl(347, 90%, 96%)", // danger-light
-                        //color: "hsl(206, 70%, 96%)", // info-light
                     }
                     localStorage.setItem("user", JSON.stringify(user))
                     set(ref(database, 'sudoku/players/' + user.id), user)
