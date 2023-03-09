@@ -57,7 +57,7 @@
 
             function Sudoku({cells, players, clicked}) {
 
-                const size = 40
+                const size = 35
 
                 const borders = (col, row) => {
 
@@ -94,7 +94,7 @@
 
                 const ClickableTd = ({click, number}) => {
                     return <td style={{border: "solid black 2px"}}>
-                            <div onClick={() => click(number)} style={{height: "120px", width: "120px"}} className="is-size-1 is-flex is-flex-wrap-wrap is-justify-content-center is-align-content-center">{number}</div>
+                            <div onClick={() => click(number)} style={{height: "105px", width: "105px"}} className="is-size-1 is-flex is-flex-wrap-wrap is-justify-content-center is-align-content-center">{number}</div>
                         </td>
                 }
 
