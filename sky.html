@@ -31,7 +31,9 @@
                 return `${d}° ${m}' ${s}"`
             }
 
-            
+            const objectList = [
+                { name: "M35", ra: "5:34:30", de: "+22:01:00" }
+            ]            
 
             const hoursminsecToDegrees = ({hours, minutes, seconds}) => {
                 return (hours + minutes / 60 + seconds / 3600) * 15
@@ -78,56 +80,117 @@
                 }
 
                 return (<>
-                    <h1 class="title is-1">Hello, world! {count}</h1>
+                    <h1 className="title is-1">Hello, world! {count}</h1>
                     <button className="button is-primary" onClick={() => test()}>test</button>
                 </>)
             }
 
-            function Card({img, name}) {
-                return <div class="block"><div class="card">
-                    <div class="card-image">
-                        <figure class="image is-4by4">
+            function ShowLocation({altaz}) {
+                console.log(altaz)
+                let {alt, az} = altaz
+                alt = alt.substring(0, alt.length-3)
+                az = az.substring(0, az.length-3)
+
+                return <div className="content">
+                    <p>👆 {alt} &nbsp;&nbsp; 🧭 {az}</p>
+                </div>
+            }
+
+            function Card({object}) {
+
+                const {name, img, stars, altaz, description } = object
+
+                return <div className="block"><div className="card">
+                    <div className="card-image">
+                        <figure className="image is-4by4">
                         <img src={img || "https://bulma.io/images/placeholders/1280x960.png"} alt="Placeholder image" />
                         </figure>
                     </div>
-                    <div class="card-content">
-                        <div class="media">
-                        <div class="media-left">
-                            <figure class="image is-48x48">
-                            <img src={img || "https://bulma.io/images/placeholders/96x96.png"} alt="Placeholder image" />
+                    <div className="card-content">
+                        <div className="media">
+                        <div className="media-left">
+                            <figure className="image is-48x48">
+                            <MapIcon />
                             </figure>
                         </div>
-                        <div class="media-content">
-                            <p class="title is-4">{name}</p>
-                            <p class="subtitle is-7">🧭 -9° 17' 👆 108° 52'</p>
+                        <div className="media-content">
+                            <p className="title is-4">{name}</p>
+                            <p className="subtitle is-7">{!!altaz && <ShowLocation altaz={altaz} />}</p>
                         </div>
                         </div>
 
-                        <div class="content">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                        Phasellus nec iaculis mauris.
-
+                        <div className="content">
+                        { description }
+                        </div>
+                        <div className="content">
+                            {[...Array(stars).keys()].map(() => "⭐️")}
                         </div>
                     </div>
                     </div>
                     </div>
             }
 
-            function Main() {
-                return <section class="section">
-                    <div class="container">
-                    <h1 class="title">
-                        Tänään
-                    </h1>
+            function MapIcon() {
+                return <svg width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                    <g>
+                    <ellipse cy="400" cx="400" ry="380" rx="380" stroke="#000" fill="none" stroke-width="10" />
+                    <ellipse cy="400" cx="400" ry="200" rx="200" stroke="#000" fill="none" stroke-width="10" />
                     
-                        <Card img="https://www.messier-objects.com/wp-content/uploads/2015/04/Messier-35.jpg" name="M35" />
-              
-                        <Card img="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jupiter.jpg/600px-Jupiter.jpg" name="Jupiter" />
-                        <Card img="https://cdn.mos.cms.futurecdn.net/snbrHBRigvvzjxNGuUtcck-970-80.jpg.webp" name="Kuu" />
-                        <Card />
+                    <line y2="400" x2="780" y1="400" x1="20" stroke="#000" fill="none" stroke-width="10" />
+                    <line y2="780" x2="400" y1="20" x1="400" stroke="#000" fill="none" stroke-width="10" />
+
+                    <ellipse cy="230" cx="250" ry="15" rx="15" stroke="red" fill="red" />
+                    
+                    </g>
+                    </svg>
+            }
+
+            function SkyList({ date, objects, next, prev }) {
+                return <section className="section">
+                    <div className="container">
+                        <nav className="level is-mobile">
+                            <div className="level-left">
+                                <h1 className="title">
+                                    {date}
+                                </h1>
+                            </div>
+                            <div className="level-right">
+                                <div className="buttons has-addons">
+                                    <button onClick={() => prev && prev()} className="button">◀︎</button>
+                                    <button onClick={() => next && next()} className="button">►</button>
+                                </div>
+                            </div>
+                        </nav>
+                        {objects.map((obj) => <Card key={obj.name} object={obj} />)}
                         </div>
-                    
                 </section>
+            }
+
+            function Main() {
+
+                const obs = {
+                    "name": "Helsinki",
+                    "year": 2023,
+                    "month": 3,
+                    "day": 18,
+                    "hours": 15,
+                    "minutes": 15,
+                    "seconds": 12,
+                    "tz": -120,
+                    "latitude": 60.812171,
+                    "longitude": -25.127962,
+                }
+
+                const M35 = objectList[0]
+                const altaz = RadToAA(M35.ra, M35.de, obs)
+
+                const objects = [
+                    {name: "M35", img: "https://www.messier-objects.com/wp-content/uploads/2015/04/Messier-35.jpg", stars: 3, altaz: altaz, description: "Avoin tähtijoukko"},
+                    {name: "Jupiter", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jupiter.jpg/600px-Jupiter.jpg"},
+                    {name: "Kuu", img: "https://cdn.mos.cms.futurecdn.net/snbrHBRigvvzjxNGuUtcck-970-80.jpg.webp"},
+                ]
+
+                return <SkyList date="Tänään 18:00" objects={objects} prev={() => console.log("prev")} />
             }
 
             ReactDOM.render(
