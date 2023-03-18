@@ -109,7 +109,7 @@
                         <div className="media">
                         <div className="media-left">
                             <figure className="image is-48x48">
-                            <MapIcon />
+                            <MapIcon altaz={altaz} />
                             </figure>
                         </div>
                         <div className="media-content">
@@ -129,19 +129,21 @@
                     </div>
             }
 
-            function MapIcon() {
+            function MapIcon({altaz}) {
+
                 return <svg width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
                     <g>
-                    <ellipse cy="400" cx="400" ry="380" rx="380" stroke="#000" fill="none" strokeWidth="10" />
-                    <ellipse cy="400" cx="400" ry="200" rx="200" stroke="#000" fill="none" strokeWidth="10" />
-                    
-                    <line y2="400" x2="780" y1="400" x1="20" stroke="#000" fill="none" strokeWidth="10" />
-                    <line y2="780" x2="400" y1="20" x1="400" stroke="#000" fill="none" strokeWidth="10" />
+                        <ellipse cy="400" cx="400" ry="380" rx="380" stroke="#000" fill="none" strokeWidth="10" />
+                        <ellipse cy="400" cx="400" ry="200" rx="200" stroke="#000" fill="none" strokeWidth="10" />
+                        
+                        <line y2="400" x2="780" y1="400" x1="20" stroke="#000" fill="none" strokeWidth="10" />
+                        <line y2="400" x2="780" y1="400" x1="20" stroke="#000" fill="none" strokeWidth="10" />
+                        <line y2="780" x2="400" y1="20" x1="400" stroke="#000" fill="none" strokeWidth="10" />
 
-                    <ellipse cy="230" cx="250" ry="15" rx="15" stroke="red" fill="red" />
-                    
+                        <ellipse cy="230" cx="250" ry="15" rx="15" stroke="red" fill="red" />
+                        
                     </g>
-                    </svg>
+                </svg>
             }
 
             function SkyList({ date, objects, next, prev }) {
@@ -185,8 +187,8 @@
 
                 const objects = [
                     {name: "M35", img: "https://www.messier-objects.com/wp-content/uploads/2015/04/Messier-35.jpg", stars: 3, altaz: altaz, description: "Avoin tähtijoukko"},
-                    {name: "Jupiter", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jupiter.jpg/600px-Jupiter.jpg"},
-                    {name: "Kuu", img: "https://cdn.mos.cms.futurecdn.net/snbrHBRigvvzjxNGuUtcck-970-80.jpg.webp"},
+                    {name: "Jupiter", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jupiter.jpg/600px-Jupiter.jpg", altaz: altaz},
+                    {name: "Kuu", img: "https://cdn.mos.cms.futurecdn.net/snbrHBRigvvzjxNGuUtcck-970-80.jpg.webp", starts: 3, altaz: altaz},
                 ]
 
                 return <SkyList date="Tänään 18:00" objects={objects} prev={() => console.log("prev")} />
