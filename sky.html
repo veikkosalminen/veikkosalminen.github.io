@@ -244,7 +244,7 @@
                     const altaz = RadToAA(obj.ra, obj.dec, obs)
                     //const img = images[obj.name]
                     const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "supernovae"}
-                    const img = "https://astropixels.com/" + typeMap[obj.messiertype] + "/images/" + obj.name + "-01z.jpg"
+                    const img = "//wsrv.nl/?url=astropixels.com/" + typeMap[obj.messiertype] + "/images/" + obj.name + "-01z.jpg"
                     return {...obj, altaz, img}
                 })
 
