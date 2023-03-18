@@ -11,7 +11,7 @@
         <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
         <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
         <script src="https://veikkosalminen.github.io/ephemeris-1.2.1.bundle.js"></script>
-        <script src="http://localhost:8000/radtoaa.js"></script>
+        <script src="https://veikkosalminen.github.io/radtoaa.js"></script>
         
 
         <!-- Don't use this in production: -->
@@ -109,7 +109,7 @@
                         <div className="media">
                         <div className="media-left">
                             <figure className="image is-48x48">
-                            
+                            <MapIcon altaz={altaz} />
                             </figure>
                         </div>
                         <div className="media-content">
@@ -131,14 +131,16 @@
 
             function MapIcon({altaz}) {
 
+                const color = "#0055ab"
+
                 return <svg width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
                     <g>
-                        <ellipse cy="400" cx="400" ry="380" rx="380" stroke="#000" fill="none" strokeWidth="10" />
-                        <ellipse cy="400" cx="400" ry="200" rx="200" stroke="#000" fill="none" strokeWidth="10" />
+                        <ellipse cy="400" cx="400" ry="380" rx="380" stroke={color} fill="#061329" strokeWidth="10"/>
+                        <ellipse cy="400" cx="400" ry="200" rx="200" stroke={color} fill="none" strokeWidth="10" />
                         
-                        <line y2="400" x2="780" y1="400" x1="20" stroke="#000" fill="none" strokeWidth="10" />
-                        <line y2="400" x2="780" y1="400" x1="20" stroke="#000" fill="none" strokeWidth="10" />
-                        <line y2="780" x2="400" y1="20" x1="400" stroke="#000" fill="none" strokeWidth="10" />
+                        <line y2="400" x2="780" y1="400" x1="20" stroke={color} fill="none" strokeWidth="10" />
+                        <line y2="400" x2="780" y1="400" x1="20" stroke={color} fill="none" strokeWidth="10" />
+                        <line y2="780" x2="400" y1="20" x1="400" stroke={color} fill="none" strokeWidth="10" />
 
                         <ellipse cy="230" cx="250" ry="15" rx="15" stroke="red" fill="red" />
                         
