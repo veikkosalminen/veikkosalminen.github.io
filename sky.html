@@ -39,7 +39,8 @@
             }
 
             const objectList = [
-                { name: "M35", ra: "5:34:30", de: "+22:01:00" }
+                { name: "M35", ra: "6:09:00", de: "+24:20:00" },
+                { name: "M1", ra: "5:34:30", de: "+22:01:00" },
             ]            
 
             const hoursminsecToDegrees = ({hours, minutes, seconds}) => {
@@ -136,6 +137,11 @@
 
             function MapIcon({altaz}) {
 
+                // convert altitude and azimuth to x and y
+                const {alt, az} = altaz
+                const x = 400 + 200 * Math.sin(az) * Math.cos(alt)
+                const y = 400 - 200 * Math.sin(alt)
+
                 const color = "#0055ab"
 
                 return <svg width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
@@ -147,7 +153,7 @@
                         <line y2="400" x2="780" y1="400" x1="20" stroke={color} fill="none" strokeWidth="10" />
                         <line y2="780" x2="400" y1="20" x1="400" stroke={color} fill="none" strokeWidth="10" />
 
-                        <ellipse cy="230" cx="250" ry="15" rx="15" stroke="red" fill="red" />
+                        <ellipse cy={y} cx={x} ry="15" rx="15" stroke="red" fill="red" />
                         
                     </g>
                 </svg>
@@ -165,7 +171,7 @@
                             <div className="level-right">
                                 <div className="buttons has-addons">
                                     <button onClick={() => prev && prev()} className="button">◀︎</button>
-                                    <button onClick={() => next && next()} className="button">►</button>
+                                    <button onClick={() => next && next()} className="button">▶︎</button>
                                 </div>
                             </div>
                         </nav>
@@ -189,16 +195,20 @@
                     "longitude": -25.127962,
                 }
 
-                const M35 = objectList[0]
+                const M35 = objectList[1]
                 const altaz = RadToAA(M35.ra, M35.de, obs)
 
+                const M1 = objectList[0]
+                const altaz2 = RadToAA(M1.ra, M1.de, obs)
+                
                 const objects = [
-                    {name: "M35", img: "https://www.messier-objects.com/wp-content/uploads/2015/04/Messier-35.jpg", stars: 3, altaz: altaz, description: "Avoin tähtijoukko"},
+                    {name: "M1", img: "https://www.nasa.gov/sites/default/files/styles/full_width/public/thumbnails/image/crab-nebula-mosaic.jpg?itok=DNaRmPtc", stars: 2, altaz: altaz2, description: "Crab nebula. Remnant of a supernova in the year 1054."},
+                    {name: "M35", img: "https://www.messier-objects.com/wp-content/uploads/2015/04/Messier-35.jpg", stars: 3, altaz: altaz, description: "Open cluster"},
                     {name: "Jupiter", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jupiter.jpg/600px-Jupiter.jpg", altaz: altaz},
                     {name: "Kuu", img: "https://cdn.mos.cms.futurecdn.net/snbrHBRigvvzjxNGuUtcck-970-80.jpg.webp", starts: 3, altaz: altaz},
                 ]
 
-                return <SkyList date="Tänään 18:00" objects={objects} prev={() => console.log("prev")} />
+                return <SkyList date="Today 18:00" objects={objects} prev={() => console.log("prev")} />
             }
 
             ReactDOM.render(
