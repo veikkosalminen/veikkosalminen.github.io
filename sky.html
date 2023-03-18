@@ -31,6 +31,13 @@
                 return `${d}° ${m}' ${s}"`
             }
 
+            const degmin = (deg) => {
+                const d = Math.floor(deg)
+                const minfloat = (deg - d) * 60
+                const m = Math.floor(minfloat)
+                return `${d}° ${m}'`
+            }
+
             const objectList = [
                 { name: "M35", ra: "5:34:30", de: "+22:01:00" }
             ]            
@@ -88,10 +95,8 @@
             function ShowLocation({altaz}) {
                 console.log(altaz)
                 let {alt, az} = altaz
-                alt = alt.substring(0, alt.length-3)
-                az = az.substring(0, az.length-3)
-
-                return <>👆 {alt} &nbsp;&nbsp; 🧭 {az}</>
+               
+                return <>👆 {degmin(alt)} &nbsp;&nbsp; 🧭 {degmin(az)}</>
                
             }
 
