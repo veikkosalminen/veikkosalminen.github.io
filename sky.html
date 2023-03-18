@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Sky 🪐</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+        <script src="https://veikkosalminen.github.io/ephemeris-1.2.1.bundle.js"></script>
+        <script src="http://localhost:8000/radtoaa.js"></script>
+        
+
+        <!-- Don't use this in production: -->
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="text/babel">
+
+            const degminsec = (deg) => {
+                const d = Math.floor(deg)
+                const minfloat = (deg - d) * 60
+                const m = Math.floor(minfloat)
+                const secfloat = (minfloat - m) * 60
+                const s = Math.round(secfloat)
+                return `${d}° ${m}' ${s}"`
+            }
+
+            
+
+            const hoursminsecToDegrees = ({hours, minutes, seconds}) => {
+                return (hours + minutes / 60 + seconds / 3600) * 15
+            }
+
+            function Palikka() {
+                const [count, setCount] = React.useState(0)
+
+                const test = () => {
+                    console.log(Ephemeris)
+                    const ephemeris = new Ephemeris.default({
+                        key: ["jupiter", "moon", "saturn", "sirius"],
+                        year: 2023, month: 2, day: 18, hours: 12, minutes: 12,
+                        latitude: 60.812171, longitude: 25.127962,
+                        calculateShadows: false
+                    })
+                    console.log(ephemeris)
+                    console.log(degminsec(ephemeris.Observer.latitude), degminsec(ephemeris.Observer.longitude))
+                    console.log("jupiter", ephemeris.jupiter.position.altaz.topocentric)
+                    console.log("saturn", ephemeris.saturn.position.altaz.topocentric)
+                    console.log("moon", ephemeris.moon)
+                    
+                    const alt = ephemeris.sirius.position.altaz.topocentric.altitude
+                    const az = ephemeris.sirius.position.altaz.topocentric.azimuth
+                    console.log("sirius", ephemeris.sirius, degminsec(alt), degminsec(az))
+
+                    const obs = {
+                        "name": "Helsinki",
+                        "year": 2023,
+                        "month": 3,
+                        "day": 18,
+                        "hours": 15,
+                        "minutes": 15,
+                        "seconds": 12,
+                        "tz": -120,
+                        "latitude": 60.812171,
+                        "longitude": -25.127962,
+                    }
+                    //"Sirius"
+                    const ra = "5:34:30"
+                    const de = "+22:01:00"
+                    const altaz = RadToAA(ra, de, obs)
+                    console.log("own", altaz)
+                }
+
+                return (<>
+                    <h1 class="title is-1">Hello, world! {count}</h1>
+                    <button className="button is-primary" onClick={() => test()}>test</button>
+                </>)
+            }
+
+            function Card({img, name}) {
+                return <div class="block"><div class="card">
+                    <div class="card-image">
+                        <figure class="image is-4by4">
+                        <img src={img || "https://bulma.io/images/placeholders/1280x960.png"} alt="Placeholder image" />
+                        </figure>
+                    </div>
+                    <div class="card-content">
+                        <div class="media">
+                        <div class="media-left">
+                            <figure class="image is-48x48">
+                            <img src={img || "https://bulma.io/images/placeholders/96x96.png"} alt="Placeholder image" />
+                            </figure>
+                        </div>
+                        <div class="media-content">
+                            <p class="title is-4">{name}</p>
+                            <p class="subtitle is-6">-9° 17' - 108° 52'</p>
+                        </div>
+                        </div>
+
+                        <div class="content">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                        Phasellus nec iaculis mauris.
+
+                        </div>
+                    </div>
+                    </div>
+                    </div>
+            }
+
+            function Main() {
+                return <section class="section">
+                    <div class="container">
+                    <h1 class="title">
+                        Tänään
+                    </h1>
+                    
+                        <Card img="https://www.messier-objects.com/wp-content/uploads/2015/04/Messier-35.jpg" name="M35" />
+              
+                        <Card img="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jupiter.jpg/600px-Jupiter.jpg" name="Jupiter" />
+                        <Card img="https://cdn.mos.cms.futurecdn.net/snbrHBRigvvzjxNGuUtcck-970-80.jpg.webp" name="Kuu" />
+                        <Card />
+                        </div>
+                    
+                </section>
+            }
+
+            ReactDOM.render(
+                <Main />,
+                document.getElementById('root')
+            );
+
+        </script>
+    </body>
+
+</html>
