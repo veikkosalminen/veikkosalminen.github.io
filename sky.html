@@ -183,7 +183,7 @@
 
                 // convert altitude and azimuth to x and y coordinates
                 const {alt, az} = altaz
-                const x = 400 + size * Math.sin(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
+                const x = 400 - size * Math.sin(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
                 const y = 400 - size * Math.cos(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
 
                 const color = "#0055ab"
@@ -250,9 +250,26 @@
                 return objects.filter( (a) => a.magnitude < limitMagnitude )
             }
 
+            const niceDateForHeader = (date) => {
+                const now = new Date()
+                // Today 18:00
+                let dateStr = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate()
+
+                if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
+                    dateStr =  "Today"
+                }
+
+                const time =  date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes()
+
+                return dateStr + " " + time
+            }
+
             function Main() {
 
                 const now = new Date()
+
+                now.setHours(20)
+                now.setMinutes(0)
 
                 const obs = {
                     "name": "Helsinki",
@@ -275,11 +292,11 @@
                         latitude: 60.812171, longitude: 25.127962,
                         calculateShadows: false
                     })
-                console.log(ephemeris)
+                
                 let objects = messier.map((obj) => {
                     const altaz = RadToAA(obj.ra, obj.dec, obs)
                     //const img = images[obj.name]
-                    const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "supernovae"}
+                    const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "supernovae", DN: "diffusenebulae"}
                     const img = "//wsrv.nl/?url=astropixels.com/" + typeMap[obj.messiertype] + "/images/" + obj.name + "-01z.jpg"
                     const link = `https://en.wikipedia.org/wiki/Messier_${obj.name.substring(1)}`
                     return {...obj, altaz, img, link}
@@ -300,7 +317,7 @@
 
                 const orderObjects = objects.sort((a, b) => b.points - a.points)
 
-                return <SkyList date="Today 18:00" objects={orderObjects.slice(0, 20)} prev={() => console.log("prev")} />
+                return <SkyList date={niceDateForHeader(now)} objects={orderObjects.slice(0, 20)} prev={() => console.log("prev")} />
             }
 
             ReactDOM.render(
