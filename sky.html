@@ -1301,7 +1301,7 @@
                     console.log(Ephemeris)
                     const ephemeris = new Ephemeris.default({
                         key: ["jupiter", "moon", "saturn", "sirius"],
-                        year: 2023, month: 2, day: 18, hours: 12, minutes: 12,
+                        year: 2023, month: 2, day: 18, hours: 10, minutes: 12,
                         latitude: 60.812171, longitude: 25.127962,
                         calculateShadows: false
                     })
@@ -1480,27 +1480,32 @@
                     //const img = images[obj.name]
                     const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "supernovae", DN: "diffusenebulae"}
                     const img = "//wsrv.nl/?url=astropixels.com/" + typeMap[obj.messiertype] + "/images/" + obj.name + "-01z.jpg"
-                    const link = `https://en.wikipedia.org/wiki/Messier_${obj.name.substring(1)}`
-                    return {...obj, altaz, img, link}
+                    
+                    const wikiLink = `https://en.wikipedia.org/wiki/Messier_${obj.name.substring(1)}`
+                    //const stellariumLink = `https://stellarium-web.org/skysource/${planet.name}?fov=120.00&date=${date.toISOString()}&lat=${lat}&lng=${lon}&elev=0`
+                    const description = <>{obj.description} <a href={wikiLink}>@wikipedia</a></>
+                    
+                    return {...obj, altaz, img, description}
                 })
             }
 
             const fillPlanetData = ({objects, lat, lon, date}) => {
 
                 const ephemeris = new Ephemeris.default({
-                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours(), minutes: date.getMinutes(),
+                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
                     latitude: lat, longitude: lon,
                     calculateShadows: false
                 })
-
-                console.log(ephemeris)
 
                 return objects.map( planet => {
                     const ephemeri = ephemeris[planet.name.toLowerCase()]
                     const alt = ephemeri.position.altaz.topocentric.altitude
                     const az = ephemeri.position.altaz.topocentric.azimuth
                     const altaz = {alt, az}
-                    return {...planet, altaz, magnitude: ephemeri.magnitude | 0}
+                    const link = "https://en.wikipedia.org/wiki/" + planet.name
+                    const stellariumLink = `https://stellarium-web.org/skysource/${planet.name}?fov=120.00&date=${date.toISOString()}&lat=${lat}&lng=${lon}&elev=0`
+                    const description = <>{planet.description} <a href={link}>@wikipedia</a> <a href={stellariumLink}>@stellarium</a></>
+                    return {...planet, altaz, magnitude: ephemeri.magnitude | 0, description}
                 })
             }
 
