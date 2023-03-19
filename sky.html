@@ -225,6 +225,31 @@
                 </section>
             }
 
+            const calculatePoints = (objects) => {
+
+                const getPoints = (object) => {
+                    const {magnitude, altaz} = object
+                    const {alt, az} = altaz
+                    
+                    const cofficientAlt = 0.5
+                    const cofficientMagnitude = 0.5
+
+                    const decimal = alt / 90 * cofficientAlt + (8.5 - magnitude) / 8.5 * cofficientMagnitude
+                    
+                    return decimal * 10
+                }
+
+                return objects.map( a => ({...a, points: getPoints(a)}) )
+            }
+
+            const filterObjectsTooLow = (objects, limitAltitudeDegrees) => {
+                return objects.filter( (a) => a.altaz.alt > limitAltitudeDegrees )
+            }
+
+            const filterObjectsTooDim = (objects, limitMagnitude) => {
+                return objects.filter( (a) => a.magnitude < limitMagnitude )
+            }
+
             function Main() {
 
                 const now = new Date()
@@ -256,7 +281,7 @@
                     //const img = images[obj.name]
                     const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "supernovae"}
                     const img = "//wsrv.nl/?url=astropixels.com/" + typeMap[obj.messiertype] + "/images/" + obj.name + "-01z.jpg"
-                    const link = `https://en.wikipedia.org/wiki/Messier_${name.substring(1)}`
+                    const link = `https://en.wikipedia.org/wiki/Messier_${obj.name.substring(1)}`
                     return {...obj, altaz, img, link}
                 })
 
@@ -267,22 +292,15 @@
                     return {...planet, altaz, magnitude: 1}
                 }))
 
+                objects = calculatePoints(objects)
+                objects = filterObjectsTooLow(objects, 10)
+                objects = filterObjectsTooDim(objects, 8.5)
+
                 console.log("objects", objects)
 
-                const getPoints = (object) => {
-                    const cofficientAlt = 0.5
-                    const cofficientMagnitude = 0.5
-                    const decimal = object.altaz.alt / 90 * cofficientAlt + (8.5 - object.magnitude) / 8.5 * cofficientMagnitude
-                    return decimal * 10
-                }
+                const orderObjects = objects.sort((a, b) => b.points - a.points)
 
-                objects = objects.map( a => ({...a, points: getPoints(a)}) )
-
-                const orderObjects = objects.filter( (a) => a.magnitude < 8.5 ).sort((a, b) => {
-                    return b.points - a.points
-                }).slice(0, 20)
-
-                return <SkyList date="Today 18:00" objects={orderObjects} prev={() => console.log("prev")} />
+                return <SkyList date="Today 18:00" objects={orderObjects.slice(0, 20)} prev={() => console.log("prev")} />
             }
 
             ReactDOM.render(
