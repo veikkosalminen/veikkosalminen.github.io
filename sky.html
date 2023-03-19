@@ -1241,6 +1241,12 @@
                 }
             ]
 
+            const others = [
+                { name:"Albireo", stars: 3, type:"duoblestar", ra: "19:30:43",
+                    dec: "+27:57:34",
+                    "magnitude": "5.11",description:"Duoble Star", img: "https://upload.wikimedia.org/wikipedia/commons/f/f5/NewAlbireo.jpg" }
+            ]
+
             const images = {
                 M1: "https://www.nasa.gov/sites/default/files/styles/full_width/public/thumbnails/image/crab-nebula-mosaic.jpg?itok=DNaRmPtc",
                 M2: "http://astropixels.com/openclusters/images/M2-01w.jpg",
@@ -1409,7 +1415,7 @@
                 </svg>
             }
 
-            function SkyList({ date, objects, next, prev }) {
+            function SkyList({ date, objects, next, prev, lat, lon }) {
                 return <section className="section">
                     <div className="container">
                         <nav className="level is-mobile">
@@ -1425,6 +1431,9 @@
                                 </div>
                             </div>
                         </nav>
+                        <p class="subtitle">
+                            {lat}° {lon}°
+                        </p>
                         {objects.map((obj) => <Card key={obj.name} object={obj} />)}
                         </div>
                 </section>
@@ -1479,7 +1488,7 @@
                     const altaz = RadToAA(obj.ra, obj.dec, obs)
                     //const img = images[obj.name]
                     const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "supernovae", DN: "diffusenebulae"}
-                    const img = "//wsrv.nl/?url=astropixels.com/" + typeMap[obj.messiertype] + "/images/" + obj.name + "-01z.jpg"
+                    const img = obj.img || "//wsrv.nl/?url=astropixels.com/" + typeMap[obj.messiertype] + "/images/" + obj.name + "-01z.jpg"
                     
                     const wikiLink = `https://en.wikipedia.org/wiki/Messier_${obj.name.substring(1)}`
                     //const stellariumLink = `https://stellarium-web.org/skysource/${planet.name}?fov=120.00&date=${date.toISOString()}&lat=${lat}&lng=${lon}&elev=0`
@@ -1535,6 +1544,7 @@
 
                 let objects = [].concat(
                     fillMessierData({objects: messier, lat: lat, lon: lon, date: now}), 
+                    fillMessierData({objects: others, lat: lat, lon: lon, date: now}), 
                     fillPlanetData({objects: planets, lat: lat, lon: lon, date: now})
                 )
                 
@@ -1547,7 +1557,7 @@
 
                 const orderObjects = objects.sort((a, b) => b.points - a.points)
 
-                return <SkyList date={niceDateForHeader(now)} objects={orderObjects.slice(0, 30)} prev={() => console.log("prev")} />
+                return <SkyList date={niceDateForHeader(now)} objects={orderObjects.slice(0, 30)} prev={() => console.log("prev")} lat={lat} lon={lon} />
             }
 
             ReactDOM.render(
