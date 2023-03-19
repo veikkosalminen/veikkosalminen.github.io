@@ -81,6 +81,10 @@
                 Moon: "https://cdn.mos.cms.futurecdn.net/snbrHBRigvvzjxNGuUtcck-970-80.jpg.webp",
             }
 
+            const planets = [
+                { name:"Jupiter", type:"planet", description:"Planet", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jupiter.jpg/600px-Jupiter.jpg"},
+            ]
+
             const hoursminsecToDegrees = ({hours, minutes, seconds}) => {
                 return (hours + minutes / 60 + seconds / 3600) * 15
             }
@@ -141,7 +145,7 @@
 
             function Card({object}) {
 
-                const {name, img, stars, altaz, description, magnitude } = object
+                const {name, img, stars, altaz, description, magnitude, link } = object
 
                 return <div className="block"><div className="card">
                     <div className="card-image">
@@ -163,7 +167,7 @@
                         </div>
 
                         <div className="content">
-                        { description } <a href={`https://en.wikipedia.org/wiki/Messier_${name.substring(1)}`}>@Wikipedia</a>
+                        { description } {!!link && <a href={link}>@Wikipedia</a>}
                         </div>
                         <div className="content">
                             {[...Array(stars).keys()].map(() => "⭐️")}
@@ -239,18 +243,36 @@
                 }
 
                 console.log("obs", obs)
+
+                const ephemeris = new Ephemeris.default({
+                        key: ["jupiter", "moon", "saturn", "sirius"],
+                        year: now.getFullYear(), month: now.getMonth(), day: now.getDate(), hours: now.getHours(), minutes: now.getMinutes(),
+                        latitude: 60.812171, longitude: 25.127962,
+                        calculateShadows: false
+                    })
                 
-                const objects = messier.map((obj) => {
+                let objects = messier.map((obj) => {
                     const altaz = RadToAA(obj.ra, obj.dec, obs)
                     //const img = images[obj.name]
                     const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "supernovae"}
                     const img = "//wsrv.nl/?url=astropixels.com/" + typeMap[obj.messiertype] + "/images/" + obj.name + "-01z.jpg"
-                    return {...obj, altaz, img}
+                    const link = `https://en.wikipedia.org/wiki/Messier_${name.substring(1)}`
+                    return {...obj, altaz, img, link}
                 })
+
+                objects = objects.concat(planets.map( planet => {
+                    const alt = ephemeris[planet.name.toLowerCase()].position.altaz.topocentric.altitude
+                    const az = ephemeris[planet.name.toLowerCase()].position.altaz.topocentric.azimuth
+                    const altaz = {alt, az}
+                    return {...planet, altaz, magnitude: 1}
+                }))
+
+                console.log("objects", objects)
 
                 const getPoints = (object) => object.altaz.alt / 90 * (8.5 - object.magnitude)
 
                 const orderObjects = objects.filter( (a) => a.magnitude < 8.5 ).sort((a, b) => {
+                    console.log(a, getPoints(a))
                     if (getPoints(a) < getPoints(b)) return 1
                     if (getPoints(a) > getPoints(b)) return -1
                     return 0
