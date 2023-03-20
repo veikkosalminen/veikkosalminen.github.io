@@ -247,6 +247,25 @@
                         </>
             }
 
+            function MoonAndSunPhase({lat, lon, date}) {
+
+                const ephemeris = new Ephemeris.default({
+                    key: ["sun", "moon"],
+                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
+                    latitude: lat, longitude: lon,
+                    calculateShadows: false
+                })
+
+                const sunAlt = Math.round(ephemeris.sun.position.altaz.topocentric.altitude)
+                const moonAlt = Math.round(ephemeris.moon.position.altaz.topocentric.altitude)
+                const moonPhase = Math.round((1 - Math.abs(ephemeris.moon.position.phaseDecimal - 0.5) * 2) * 100)
+                const moonPhaseIcons = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
+                const phaseEight = Math.floor(ephemeris.moon.position.phaseDecimal * 8)
+                const moonPhaseIcon = moonPhaseIcons[phaseEight]
+                console.log(ephemeris.moon.position.phaseDecimal, phaseEight)
+                return `${moonPhaseIcon} ${moonPhase}% 👆 ${moonAlt}° ☀️ ${sunAlt}°`
+            }
+
             function SkyList({ date, objects, next, prev, lat, lon, filterChange, sectorChange, sector, dateChange }) {
                 return <section className="section">
                     <div className="container">
@@ -263,6 +282,7 @@
                                 </div>
                             </div>
                         </nav>
+                        <div><MoonAndSunPhase lat={lat} lon={lon} date={date} /></div>
                         <nav className="level is-mobile">
                             <div className="level-left">
                                 <p className="subtitle">
