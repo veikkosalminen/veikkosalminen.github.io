@@ -42,7 +42,8 @@
             const niceDateForHeader = (date) => {
                 const now = new Date()
                 // Today 18:00
-                let dateStr = date.toISOString().substring(0, 10)
+                const month_names_short = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                let dateStr = date.getDate() + "." + month_names_short[date.getMonth()]
 
                 if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
                     dateStr =  "Today"
