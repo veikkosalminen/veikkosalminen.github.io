@@ -1415,6 +1415,11 @@
                 </svg>
             }
 
+            const roundBy = (number, decimals) => {
+                const rounder = Math.pow(10, decimals)
+                return Math.round(number*rounder)/rounder
+            }
+
             function SkyList({ date, objects, next, prev, lat, lon }) {
                 return <section className="section">
                     <div className="container">
@@ -1432,7 +1437,7 @@
                             </div>
                         </nav>
                         <p class="subtitle">
-                            {lat}° {lon}°
+                            {roundBy(lat,4)}° {roundBy(lon,4)}°
                         </p>
                         {objects.map((obj) => <Card key={obj.name} object={obj} />)}
                         </div>
