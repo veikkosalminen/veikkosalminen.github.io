@@ -58,11 +58,7 @@
                 return (hours + minutes / 60 + seconds / 3600) * 15
             }
 
-            const getAutoTime = (day, lat, lon) => {
-
-                const date = new Date()
-                date.setDate(day)
-
+            const getAutoTime = (date, lat, lon) => {
                 const ephemeris = new Ephemeris.default({
                     key: ["sun"],
                     year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
@@ -215,9 +211,16 @@
                 return <button onClick={() => next()} className="is-ghost button is-small">{filters.find(a => a.name === filter).label}</button>
             }
 
-            function DatePicker({date}) {
+            function DatePicker({date, dateChange}) {
 
+                const [pickedDate, setPickedDate] = React.useState(date.toISOString().substring(0,10))
+                const [pickedTime, setPickedTime] = React.useState(date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes() + ":00")
                 const [showPicker, setShowPicker] = React.useState(false)
+
+                const set = () => {
+                    setShowPicker(false)
+                    dateChange(new Date(pickedDate + " " + pickedTime + ":00"))
+                }
 
                 return <><span onClick={() => setShowPicker(true)}>{niceDateForHeader(date)}</span>
                        {showPicker && <div className="modal is-active">
@@ -227,16 +230,16 @@
                                     <div className="columns is-mobile">
                                         <div className="column">
                                             <div className="control">
-                                                <input className="input" type="date" value={date.toISOString().substring(0,10)} />
+                                                <input className="input" type="date" value={pickedDate} onChange={e => setPickedDate(e.target.value)} />
                                             </div>
                                         </div>
                                         <div className="column">
                                             <div className="control">
-                                                <input className="input" type="time" value={date.toISOString().substring(11, 16)} />
+                                                <input className="input" type="time" value={pickedTime} onChange={e => setPickedTime(e.target.value)} />
                                             </div>
                                         </div>
                                     </div>
-                                    <button className="button">Set</button>
+                                    <button className="button" onClick={() => set()}>Set</button>
                                 </div>
                             </div>
                         <button className="modal-close is-large" aria-label="close"></button>
@@ -244,13 +247,13 @@
                         </>
             }
 
-            function SkyList({ date, objects, next, prev, lat, lon, filterChange, sectorChange, sector }) {
+            function SkyList({ date, objects, next, prev, lat, lon, filterChange, sectorChange, sector, dateChange }) {
                 return <section className="section">
                     <div className="container">
                         <nav className="level is-mobile">
                             <div className="level-left">
                                 <h1 className="title">
-                                    <DatePicker date={date} />
+                                    <DatePicker date={date} dateChange={dateChange} />
                                 </h1>
                             </div>
                             <div className="level-right">
@@ -380,21 +383,19 @@
 
             function Main() {
 
-                const [filter, setFilter] = React.useState(null)
-                const [sector, setSector] = React.useState(null)
-                const [day, setDay] = React.useState((new Date()).getDate())
-
                 const lat = 60.812171
                 const lon = 25.127962
 
-                const now = getAutoTime(day, lat, lon)
+                const [filter, setFilter] = React.useState(null)
+                const [sector, setSector] = React.useState(null)
+                const [date, setDate] = React.useState(getAutoTime(new Date(), lat, lon))
 
                 const skyObjects = getSkyObjects()
 
                 let objects = [].concat(
-                    fillMessierData({objects: skyObjects.messier, lat: lat, lon: lon, date: now}), 
-                    fillMessierData({objects: skyObjects.others, lat: lat, lon: lon, date: now}), 
-                    fillPlanetData({objects: skyObjects.planets, lat: lat, lon: lon, date: now})
+                    fillMessierData({objects: skyObjects.messier, lat: lat, lon: lon, date: date}), 
+                    fillMessierData({objects: skyObjects.others, lat: lat, lon: lon, date: date}), 
+                    fillPlanetData({objects: skyObjects.planets, lat: lat, lon: lon, date: date})
                 )
                 
 
@@ -410,14 +411,15 @@
                 const orderObjects = objects.sort((a, b) => b.points - a.points)
 
                 return <SkyList 
-                    date={now} 
+                    date={date} 
                     objects={orderObjects.slice(0, 30)} 
-                    prev={() => setDay(day - 1)} 
-                    next={() => setDay(day + 1)}
+                    prev={() => setDate(new Date(date.setDate(date.getDate() - 1)))} 
+                    next={() => setDate(new Date(date.setDate(date.getDate() + 1)))}
                     lat={lat} lon={lon} 
                     filterChange={(filter) => setFilter(filter)}
                     sector={sector}
                     sectorChange={(sector) => setSector(sector)}
+                    dateChange={(date) => setDate(date)}
                 />
             }
 
