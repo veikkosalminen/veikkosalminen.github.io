@@ -129,18 +129,6 @@
                     {name: "planet", label: "Planets"},
                 ]
 
-                const prev = () => {
-                    const index = filters.findIndex(f => f.name === filter)
-                    if (index > 0) {
-                        filterChange(filters[index-1].name)
-                        setFilter(filters[index-1].name)
-                    }
-                    else {
-                        filterChange(filters[filters.length-1].name)
-                        setFilter(filters[filters.length-1].name)
-                    }
-                }
-
                 const next = () => {
                     const index = filters.findIndex(f => f.name === filter)
                     if (index < filters.length-1) {
@@ -153,11 +141,7 @@
                     }
                 }
 
-                return <div className="buttons has-addons are-small">
-                            <button onClick={() => prev && prev()} className="is-ghost button">◀︎</button>
-                            <button className="is-ghost button">{filters.find(a => a.name === filter).label}</button>
-                            <button onClick={() => next && next()} className="is-ghost button">▶︎</button>
-                        </div>
+                return <button onClick={() => next()} className="is-ghost button is-small">{filters.find(a => a.name === filter).label}</button>
             }
 
             function SkyList({ date, objects, next, prev, lat, lon, filterChange }) {
