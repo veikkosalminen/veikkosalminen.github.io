@@ -492,12 +492,30 @@
                 })
             }
 
+            const fillLunarData = ({objects, lat, lon, date}) => {
+
+                const ephemeris = new Ephemeris.default({
+                    key: ["moon"],
+                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
+                    latitude: lat, longitude: lon,
+                    calculateShadows: false
+                })
+
+                return objects.map( object => {
+                    const ephemeri = ephemeris["moon"]
+                    const alt = ephemeri.position.altaz.topocentric.altitude
+                    const az = ephemeri.position.altaz.topocentric.azimuth
+                    const altaz = {alt, az}
+                    return {...object, altaz}
+                })
+            }
+
             function Main() {
 
                 const lat = 60.812171
                 const lon = 25.127962
 
-                const [filter, setFilter] = React.useState("lunar")
+                const [filter, setFilter] = React.useState(null)
                 const [sector, setSector] = React.useState(null)
                 const [date, setDate] = React.useState(getAutoTime(new Date(), lat, lon))
 
@@ -507,7 +525,7 @@
                     fillMessierData({objects: skyObjects.messier, lat: lat, lon: lon, date: date}), 
                     fillMessierData({objects: skyObjects.others, lat: lat, lon: lon, date: date}), 
                     fillPlanetData({objects: skyObjects.planets, lat: lat, lon: lon, date: date}),
-                    lunarTargets,
+                    fillLunarData({objects: lunarTargets, lat: lat, lon: lon, date: date}),
                 )
                 
 
