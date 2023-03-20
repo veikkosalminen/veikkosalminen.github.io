@@ -43,6 +43,27 @@
                 return (hours + minutes / 60 + seconds / 3600) * 15
             }
 
+            const getAutoTime = (day, lat, lon) => {
+
+                const date = new Date()
+                date.setDate(day)
+
+                const ephemeris = new Ephemeris.default({
+                    key: ["sun"],
+                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
+                    latitude: lat, longitude: lon,
+                    calculateShadows: false
+                })
+
+                const sunsetHour = ephemeris.sun.position.altaz.transit.approxSetUT.hours - date.getTimezoneOffset()/60
+
+                if (sunsetHour > date.getHours()) {
+                    date.setHours(sunsetHour + 2 <= 23 ? sunsetHour + 2 : 23)
+                    date.setMinutes(0)
+                }
+
+                return date
+            }
 
             function ShowLocation({altaz, magnitude}) {
                 let {alt, az} = altaz
@@ -149,7 +170,9 @@
                         <nav className="level is-mobile">
                             <div className="level-left">
                                 <h1 className="title">
-                                    {date}
+                                    <div className="control">
+                                        <input className="input" type="date"  />
+                                    </div>
                                 </h1>
                             </div>
                             <div className="level-right">
@@ -269,7 +292,7 @@
             const niceDateForHeader = (date) => {
                 const now = new Date()
                 // Today 18:00
-                let dateStr = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate()
+                let dateStr = date.toISOString().substring(0, 10)
 
                 if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
                     dateStr =  "Today"
@@ -283,13 +306,12 @@
             function Main() {
 
                 const [filter, setFilter] = React.useState(null)
+                const [day, setDay] = React.useState((new Date()).getDate())
 
                 const lat = 60.812171
                 const lon = 25.127962
-                const now = new Date()
 
-                now.setHours(20)
-                now.setMinutes(0)
+                const now = getAutoTime(day, lat, lon)
 
                 const skyObjects = getSkyObjects()
 
@@ -313,7 +335,8 @@
                 return <SkyList 
                     date={niceDateForHeader(now)} 
                     objects={orderObjects.slice(0, 30)} 
-                    prev={() => console.log("prev")} 
+                    prev={() => setDay(day - 1)} 
+                    next={() => setDay(day + 1)}
                     lat={lat} lon={lon} 
                     filterChange={(filter) => setFilter(filter)}
                 />
