@@ -133,16 +133,15 @@
 
                 const color = "#0055ab"
 
-                return <img width="48px" height="48px" src="https://www.solarsystemscope.com/spacepedia/images/handbook/renders/moon.png" />
-
-                return <svg width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
-                    <g>
-                        <ellipse cy="400" cx="400" ry="380" rx="380" stroke="black" fill="grey" strokeWidth="10"/>
-                        
-                        <ellipse cy={y} cx={x} ry="30" rx="30" stroke="yellow" fill="yellow" />
-                        
-                    </g>
-                </svg>   
+                return <div style={{width: "48px", height: "48px", position: "relative"}}>
+                        <img style={{position: "absolute", left: 0, right:0}} width="48px" height="48px" src="https://www.solarsystemscope.com/spacepedia/images/handbook/renders/moon.png" />
+                        <svg style={{position: "absolute", left: 0, right:0}} width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                            <g>
+                                <ellipse cy={y} cx={x} ry="60" rx="60" stroke="yellow" fill="yellow" />
+                                
+                            </g>
+                        </svg>   
+                    </div>
             }
 
             function LunarCard({object}) {
@@ -470,7 +469,7 @@
                 const lat = 60.812171
                 const lon = 25.127962
 
-                const [filter, setFilter] = React.useState(null)
+                const [filter, setFilter] = React.useState("lunar")
                 const [sector, setSector] = React.useState(null)
                 const [date, setDate] = React.useState(getAutoTime(new Date(), lat, lon))
 
