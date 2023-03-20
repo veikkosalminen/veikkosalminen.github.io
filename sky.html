@@ -45,11 +45,9 @@
 
 
             function ShowLocation({altaz, magnitude}) {
-                console.log(altaz)
                 let {alt, az} = altaz
                
                 return <>👆 {degmin(alt)} &nbsp;&nbsp; 🧭 {degmin(az)} &nbsp;&nbsp; ✨ {magnitude} </>
-               
             }
 
             function Card({object}) {
@@ -123,10 +121,11 @@
                 const [filter, setFilter] = React.useState(null)
 
                 const filters = [
-                    {name: null, label: "All"},
+                    {name: null, label: "Recommended"},
                     {name: "messier", label: "Messier"},
                     {name: "galaxies", label: "Galaxies"},
                     {name: "planet", label: "Planets"},
+                    {name: "nebulae", label: "Nebulae"},
                 ]
 
                 const next = () => {
@@ -162,7 +161,7 @@
                         </nav>
                         <nav className="level is-mobile">
                             <div className="level-left">
-                                <p class="subtitle">
+                                <p className="subtitle">
                                     {roundBy(lat, 3)}° {roundBy(lon, 3)}°
                                 </p>
                             </div>
@@ -206,12 +205,13 @@
             }
 
             const filterObjectsWithFilter = (objects, filter) => {
-                console.log("filter", filter, objects)
                 if (!filter) return objects
 
                 if (filter === "galaxies") {
                     return objects.filter( (a) => ["SG", "EG", "IR", "IG"].includes(a.messiertype) )
                 }
+
+                if (filter === "nebulae") return objects.filter( (a) => ["DN", "PN"].includes(a.messiertype) )
 
                 return objects.filter( (a) => a.type === filter )
             }
@@ -234,12 +234,13 @@
                 return objects.map((obj) => {
                     const altaz = RadToAA(obj.ra, obj.dec, obs)
                     //const img = images[obj.name]
-                    const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "supernovae", DN: "diffusenebulae"}
-                    const img = obj.img || "//wsrv.nl/?url=astropixels.com/" + typeMap[obj.messiertype] + "/images/" + obj.name + "-01z.jpg"
+                    const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "planetarynebulae", DN: "diffusenebulae"}
+                    const astroPixelType = obj.name === "M1" ? "supernovae" : typeMap[obj.messiertype]
+                    const img = obj.img || "//wsrv.nl/?url=astropixels.com/" + astroPixelType + "/images/" + obj.name + "-01z.jpg"
                     
                     const wikiLink = `https://en.wikipedia.org/wiki/Messier_${obj.name.substring(1)}`
-                    //const stellariumLink = `https://stellarium-web.org/skysource/${planet.name}?fov=120.00&date=${date.toISOString()}&lat=${lat}&lng=${lon}&elev=0`
-                    const description = <>{obj.description} <a href={wikiLink}>@wikipedia</a></>
+                    const stellariumLink = `https://stellarium-web.org/skysource/${obj.name}?fov=120.00&date=${date.toISOString()}&lat=${lat}&lng=${lon}&elev=0`
+                    const description = <>{obj.description} <a href={wikiLink}>@wikipedia</a> <a href={stellariumLink}>@stellarium</a></>
                     
                     return {...obj, altaz, img, description}
                 })
@@ -306,8 +307,6 @@
                     objects = filterObjectsTooLow(objects, 10)
                     objects = filterObjectsTooDim(objects, 8.5)
                 }
-
-                console.log("objects", objects)
 
                 const orderObjects = objects.sort((a, b) => b.points - a.points)
 
