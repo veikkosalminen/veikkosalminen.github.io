@@ -39,6 +39,20 @@
                 return `${d}°`
             }
 
+            const niceDateForHeader = (date) => {
+                const now = new Date()
+                // Today 18:00
+                let dateStr = date.toISOString().substring(0, 10)
+
+                if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
+                    dateStr =  "Today"
+                }
+
+                const time =  date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes()
+
+                return dateStr + " " + time
+            }
+
             const hoursminsecToDegrees = ({hours, minutes, seconds}) => {
                 return (hours + minutes / 60 + seconds / 3600) * 15
             }
@@ -164,15 +178,42 @@
                 return <button onClick={() => next()} className="is-ghost button is-small">{filters.find(a => a.name === filter).label}</button>
             }
 
+            function DatePicker({date}) {
+
+                const [showPicker, setShowPicker] = React.useState(false)
+
+                return <><span onClick={() => setShowPicker(true)}>{niceDateForHeader(date)}</span>
+                       {showPicker && <div className="modal is-active">
+                        <div className="modal-background"></div>
+                            <div className="modal-content">
+                                <div className="box">
+                                    <div className="columns is-mobile">
+                                        <div className="column">
+                                            <div className="control">
+                                                <input className="input" type="date" value={date.toISOString().substring(0,10)} />
+                                            </div>
+                                        </div>
+                                        <div className="column">
+                                            <div className="control">
+                                                <input className="input" type="time" value={date.toISOString().substring(11, 16)} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button className="button">Set</button>
+                                </div>
+                            </div>
+                        <button className="modal-close is-large" aria-label="close"></button>
+                        </div> }
+                        </>
+            }
+
             function SkyList({ date, objects, next, prev, lat, lon, filterChange }) {
                 return <section className="section">
                     <div className="container">
                         <nav className="level is-mobile">
                             <div className="level-left">
                                 <h1 className="title">
-                                    <div className="control">
-                                        <input className="input" type="date"  />
-                                    </div>
+                                    <DatePicker date={date} />
                                 </h1>
                             </div>
                             <div className="level-right">
@@ -289,20 +330,6 @@
                 })
             }
 
-            const niceDateForHeader = (date) => {
-                const now = new Date()
-                // Today 18:00
-                let dateStr = date.toISOString().substring(0, 10)
-
-                if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
-                    dateStr =  "Today"
-                }
-
-                const time =  date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes()
-
-                return dateStr + " " + time
-            }
-
             function Main() {
 
                 const [filter, setFilter] = React.useState(null)
@@ -333,7 +360,7 @@
                 const orderObjects = objects.sort((a, b) => b.points - a.points)
 
                 return <SkyList 
-                    date={niceDateForHeader(now)} 
+                    date={now} 
                     objects={orderObjects.slice(0, 30)} 
                     prev={() => setDay(day - 1)} 
                     next={() => setDay(day + 1)}
