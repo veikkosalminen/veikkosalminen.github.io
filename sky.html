@@ -325,7 +325,7 @@
                 const moonPhaseIcons = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
                 const phaseEight = Math.floor(ephemeris.moon.position.phaseDecimal * 8)
                 const moonPhaseIcon = moonPhaseIcons[phaseEight]
-                console.log(ephemeris.moon.position.phaseDecimal, phaseEight)
+
                 return `${moonPhaseIcon} ${moonPhase}% 👆 ${moonAlt}° ☀️ ${sunAlt}°`
             }
 
@@ -361,7 +361,7 @@
                 </section>
             }
 
-            const calculatePoints = (objects) => {
+            const calculatePoints = (objects, moon) => {
 
                 const getPoints = (object) => {
                     const {magnitude, stars, altaz} = object
@@ -380,7 +380,21 @@
                     return decimal * 10
                 }
 
-                return objects.map( a => ({...a, points: a.type === "lunar" ? 5 : getPoints(a)}) )
+                const getLunarPoints = (object) => {
+                    const {phase, alt} = moon
+
+                    const cofficientAlt = 0.3
+                    const cofficientShadow = 0.7
+
+                    const shadowPosition = phase > 0.5 ? 1 - (phase - 0.5) * 2 : 1 - phase * 2
+                    const diff = Math.abs(object.phase - shadowPosition)
+                    const shadowDiffPoints = diff > 0.2 ? 0 : (0.2 - diff) / 0.2 * cofficientShadow
+                    const altitudePoints = alt / 90 * cofficientAlt
+
+                    return (shadowDiffPoints + altitudePoints) * 10
+                }
+
+                return objects.map( a => ({...a, points: a.type === "lunar" ? getLunarPoints(a) : getPoints(a)}) )
             }
 
             const filterObjectsTooLow = (objects, limitAltitudeDegrees) => {
@@ -444,6 +458,20 @@
                 })
             }
 
+            const getMoonPhaseAndAltitude = (lat, lon, date) => {
+                const ephemeris = new Ephemeris.default({
+                    key: ["moon"],
+                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
+                    latitude: lat, longitude: lon,
+                    calculateShadows: false
+                })
+                
+                return {
+                    phase: ephemeris.moon.position.phaseDecimal, 
+                    alt: ephemeris.moon.position.altaz.topocentric.altitude,
+                }
+            }
+
             const fillPlanetData = ({objects, lat, lon, date}) => {
 
                 const ephemeris = new Ephemeris.default({
@@ -483,7 +511,7 @@
                 )
                 
 
-                objects = calculatePoints(objects)
+                objects = calculatePoints(objects, getMoonPhaseAndAltitude(lat, lon, date))
                 objects = filterObjectsWithFilter(objects, filter)
                 objects = filterObjectsWithSector(objects, sector)
                 
