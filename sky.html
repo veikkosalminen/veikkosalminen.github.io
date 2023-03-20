@@ -25,7 +25,7 @@
 
             const lunarTargets = [
                 { name: "Apollo 15", type: "lunar", lat: 26.1322, lon: 3.6339, phase: 0.5, wiki: "https://en.wikipedia.org/wiki/Apollo_15", img: "https://bruneiastronomy.org/web/wp-content/uploads/2015/04/Apollo-15-South-up_STv2_edited-1.jpg"},
-                { name: "Apollo 11", type: "lunar", lat: 26.1322, lon: 3.6339, phase: 0.5, wiki: "https://en.wikipedia.org/wiki/Apollo_11", img: "https://images.immediate.co.uk/production/volatile/sites/25/2019/07/Observing-Apollo-11-sites-668a7f7.png?quality=90&resize=620,413"},
+                { name: "Apollo 11", type: "lunar", lat: 0.67416, lon: 23.47314, phase: 0.75, wiki: "https://en.wikipedia.org/wiki/Apollo_11", img: "https://images.immediate.co.uk/production/volatile/sites/25/2019/07/Observing-Apollo-11-sites-668a7f7.png?quality=90&resize=620,413"},
                 
             ]
 
@@ -122,9 +122,32 @@
                     </div>
             }
 
+            function MoonIcon({lat, lon}) {
+
+                const size = 380
+
+                // convert altitude and azimuth to x and y coordinates
+                
+                const x = 400 + lon / 90 * size
+                const y = 400 - lat / 90 * size
+
+                const color = "#0055ab"
+
+                return <img width="48px" height="48px" src="https://www.solarsystemscope.com/spacepedia/images/handbook/renders/moon.png" />
+
+                return <svg width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                    <g>
+                        <ellipse cy="400" cx="400" ry="380" rx="380" stroke="black" fill="grey" strokeWidth="10"/>
+                        
+                        <ellipse cy={y} cx={x} ry="30" rx="30" stroke="yellow" fill="yellow" />
+                        
+                    </g>
+                </svg>   
+            }
+
             function LunarCard({object}) {
 
-                const {name, img, stars, points, description, magnitude, wiki } = object
+                const {name, img, stars, points, description, magnitude, wiki, phase, lat, lon } = object
 
                 return <div className="block"><div className="card">
                     <div className="card-image">
@@ -136,12 +159,12 @@
                         <div className="media">
                         <div className="media-left">
                             <figure className="image is-48x48">
-                            
+                            <MoonIcon lat={lat} lon={lon} />
                             </figure>
                         </div>
                         <div className="media-content">
                             <p className="title is-4">{name}</p>
-                            <p className="subtitle is-7">todo</p>
+                            <p className="subtitle is-7">🌘 {phase}</p>
                         </div>
                         </div>
 
