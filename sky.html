@@ -23,6 +23,12 @@
         <div id="root"></div>
         <script type="text/babel">
 
+            const lunarTargets = [
+                { name: "Apollo 15", type: "lunar", lat: 26.1322, lon: 3.6339, phase: 0.5, wiki: "https://en.wikipedia.org/wiki/Apollo_15", img: "https://bruneiastronomy.org/web/wp-content/uploads/2015/04/Apollo-15-South-up_STv2_edited-1.jpg"},
+                { name: "Apollo 11", type: "lunar", lat: 26.1322, lon: 3.6339, phase: 0.5, wiki: "https://en.wikipedia.org/wiki/Apollo_11", img: "https://images.immediate.co.uk/production/volatile/sites/25/2019/07/Observing-Apollo-11-sites-668a7f7.png?quality=90&resize=620,413"},
+                
+            ]
+
             const degminsec = (deg) => {
                 const d = Math.floor(deg)
                 const minfloat = (deg - d) * 60
@@ -116,6 +122,40 @@
                     </div>
             }
 
+            function LunarCard({object}) {
+
+                const {name, img, stars, points, description, magnitude, wiki } = object
+
+                return <div className="block"><div className="card">
+                    <div className="card-image">
+                        <figure className="image is-4by4">
+                        <img src={img || "https://bulma.io/images/placeholders/1280x960.png"} alt="Placeholder image" />
+                        </figure>
+                    </div>
+                    <div className="card-content">
+                        <div className="media">
+                        <div className="media-left">
+                            <figure className="image is-48x48">
+                            
+                            </figure>
+                        </div>
+                        <div className="media-content">
+                            <p className="title is-4">{name}</p>
+                            <p className="subtitle is-7">todo</p>
+                        </div>
+                        </div>
+
+                        <div className="content">
+                        { description } {!!wiki && <a href={wiki}>@Wikipedia</a>}
+                        </div>
+                        <div className="content">
+                            {[...Array(stars).keys()].map(() => "⭐️")} {Math.floor(points*10)/10}
+                        </div>
+                    </div>
+                    </div>
+                    </div>
+                }
+
             function MapIcon({altaz}) {
 
                 const size = 380
@@ -194,6 +234,7 @@
                     {name: "galaxies", label: "Galaxies"},
                     {name: "planet", label: "Planets"},
                     {name: "nebulae", label: "Nebulae"},
+                    {name: "lunar", label: "Lunar"},
                 ]
 
                 const next = () => {
@@ -293,7 +334,7 @@
                                 <SectorSelector sector={sector} sectorChange={sectorChange} /> <ObjectFilter filterChange={filterChange}/>
                             </div>
                         </nav>
-                        {objects.map((obj) => <Card key={obj.name} object={obj} />)}
+                        {objects.map((obj) => obj.type === "lunar" ? <LunarCard key={obj.name} object={obj} />: <Card key={obj.name} object={obj} />)}
                         </div>
                 </section>
             }
@@ -317,15 +358,15 @@
                     return decimal * 10
                 }
 
-                return objects.map( a => ({...a, points: getPoints(a)}) )
+                return objects.map( a => ({...a, points: a.type === "lunar" ? 5 : getPoints(a)}) )
             }
 
             const filterObjectsTooLow = (objects, limitAltitudeDegrees) => {
-                return objects.filter( (a) => a.altaz.alt > limitAltitudeDegrees )
+                return objects.filter( (a) => !a.altaz || a.altaz.alt > limitAltitudeDegrees )
             }
 
             const filterObjectsTooDim = (objects, limitMagnitude) => {
-                return objects.filter( (a) => a.magnitude < limitMagnitude )
+                return objects.filter( (a) => !a.magnitude || a.magnitude < limitMagnitude )
             }
 
             const filterObjectsWithFilter = (objects, filter) => {
@@ -415,7 +456,8 @@
                 let objects = [].concat(
                     fillMessierData({objects: skyObjects.messier, lat: lat, lon: lon, date: date}), 
                     fillMessierData({objects: skyObjects.others, lat: lat, lon: lon, date: date}), 
-                    fillPlanetData({objects: skyObjects.planets, lat: lat, lon: lon, date: date})
+                    fillPlanetData({objects: skyObjects.planets, lat: lat, lon: lon, date: date}),
+                    lunarTargets,
                 )
                 
 
