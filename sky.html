@@ -147,15 +147,16 @@
                 </svg>
             }
 
-            function SectorSelector() {
-                const [sector, setSector] = React.useState(null)
+            function SectorSelector({sector, sectorChange}) {
+                
                 const color = "#0055ab"
 
                 const sectors = [null, "NE", "SE", "SW", "NW"]
 
                 const next = () => {
                     const index = sectors.indexOf(sector)
-                    setSector(sectors[(index + 1) % sectors.length])
+                    const nextSector = sectors[(index + 1) % sectors.length]
+                    sectorChange(nextSector)
                 }
 
                 return <svg width="20" height="20" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" onClick={() => next()}>
@@ -243,7 +244,7 @@
                         </>
             }
 
-            function SkyList({ date, objects, next, prev, lat, lon, filterChange }) {
+            function SkyList({ date, objects, next, prev, lat, lon, filterChange, sectorChange, sector }) {
                 return <section className="section">
                     <div className="container">
                         <nav className="level is-mobile">
@@ -266,7 +267,7 @@
                                 </p>
                             </div>
                             <div className="level-right">
-                                <SectorSelector /> <ObjectFilter filterChange={filterChange}/>
+                                <SectorSelector sector={sector} sectorChange={sectorChange} /> <ObjectFilter filterChange={filterChange}/>
                             </div>
                         </nav>
                         {objects.map((obj) => <Card key={obj.name} object={obj} />)}
@@ -314,6 +315,17 @@
                 if (filter === "nebulae") return objects.filter( (a) => ["DN", "PN"].includes(a.messiertype) )
 
                 return objects.filter( (a) => a.type === filter )
+            }
+
+            const filterObjectsWithSector = (objects, sector) => {
+                if (!sector) return objects
+                const sectors = {
+                    NE: {min: 270, max: 360},
+                    SE: {min: 180, max: 270},
+                    SW: {min: 90, max: 180},
+                    NW: {min: 0, max: 90},
+                }
+                return objects.filter( a => a.altaz.az > sectors[sector].min && a.altaz.az < sectors[sector].max )
             }
 
             const fillMessierData = ({objects, lat, lon, date}) => {
@@ -369,6 +381,7 @@
             function Main() {
 
                 const [filter, setFilter] = React.useState(null)
+                const [sector, setSector] = React.useState(null)
                 const [day, setDay] = React.useState((new Date()).getDate())
 
                 const lat = 60.812171
@@ -387,6 +400,7 @@
 
                 objects = calculatePoints(objects)
                 objects = filterObjectsWithFilter(objects, filter)
+                objects = filterObjectsWithSector(objects, sector)
                 
                 if (!filter) {
                     objects = filterObjectsTooLow(objects, 10)
@@ -402,6 +416,8 @@
                     next={() => setDay(day + 1)}
                     lat={lat} lon={lon} 
                     filterChange={(filter) => setFilter(filter)}
+                    sector={sector}
+                    sectorChange={(sector) => setSector(sector)}
                 />
             }
 
