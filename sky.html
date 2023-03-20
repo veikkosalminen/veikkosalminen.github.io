@@ -147,6 +147,41 @@
                 </svg>
             }
 
+            function SectorSelector() {
+                const [sector, setSector] = React.useState(null)
+                const color = "#0055ab"
+
+                const sectors = [null, "NE", "SE", "SW", "NW"]
+
+                const next = () => {
+                    const index = sectors.indexOf(sector)
+                    setSector(sectors[(index + 1) % sectors.length])
+                }
+
+                return <svg width="20" height="20" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" onClick={() => next()}>
+                    {(sector === "SE" || !sector) && <g>
+                        <path fill="#061329" stroke={color} strokeWidth="10" d="m 400 400 l 380 0 a 380 380 0 0 1 -380 380 l 0 -380" />
+                        <path fill="none" stroke={color} strokeWidth="7" d="m 400 400 l 200 0 a 200 200 0 0 1 -200 200" />
+                        <line y2="400" x2="400" y1="680" x1="680" stroke={color} fill="none" strokeWidth="3" />
+                    </g>}
+                    {(sector === "SW" || !sector) && <g>
+                        <path fill="#061329" stroke={color} strokeWidth="10" d="m 400 400 l -380 0 a 380 380 0 0 0 380 380 l 0 -380" />
+                        <path fill="none" stroke={color} strokeWidth="7" d="m 400 400 l -200 0 a 200 200 0 0 0 200 200" />
+                        <line y2="400" x2="400" y1="680" x1="120" stroke={color} fill="none" strokeWidth="3" />
+                    </g>}
+                    {(sector === "NW" || !sector) && <g>
+                        <path fill="#061329" stroke={color} strokeWidth="10" d="m 400 400 l -380 0 a 380 380 0 0 1 380 -380 l 0 380" />
+                        <path fill="none" stroke={color} strokeWidth="7" d="m 400 400 l -200 0 a 200 200 0 0 1 200 -200" />
+                        <line y2="400" x2="400" y1="120" x1="120" stroke={color} fill="none" strokeWidth="3" />
+                    </g>}
+                    {(sector === "NE" || !sector) && <g>
+                        <path fill="#061329" stroke={color} strokeWidth="10" d="m 400 400 l 380 0 a 380 380 0 0 0 -380 -380 l 0 380" />
+                        <path fill="none" stroke={color} strokeWidth="7" d="m 400 400 l 200 0 a 200 200 0 0 0 -200 -200" />
+                        <line y2="400" x2="400" y1="120" x1="680" stroke={color} fill="none" strokeWidth="3" />
+                    </g>}
+                </svg>
+            }
+
             const roundBy = (number, decimals) => {
                 const rounder = Math.pow(10, decimals)
                 return Math.round(number*rounder)/rounder
@@ -231,7 +266,7 @@
                                 </p>
                             </div>
                             <div className="level-right">
-                                <ObjectFilter filterChange={filterChange}/>
+                                <SectorSelector /> <ObjectFilter filterChange={filterChange}/>
                             </div>
                         </nav>
                         {objects.map((obj) => <Card key={obj.name} object={obj} />)}
