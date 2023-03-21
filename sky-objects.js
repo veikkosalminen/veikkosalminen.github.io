@@ -1216,6 +1216,54 @@ function getSkyObjects() {
         { name:"Venus", stars: 2, type:"planet", description:"Planet", img: "https://upload.wikimedia.org/wikipedia/commons/e/e5/Venus-real_color.jpg?20151107142137"},
         { name:"Jupiter", stars: 3, type:"planet", description:"Planet", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jupiter.jpg/600px-Jupiter.jpg"},
         { name:"Moon", stars: 3, type:"planet", description:"Planet", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/631px-FullMoon2010.jpg"},
+    ],
+
+    lunarTargets: [
+                
+        { name: "Apollo 11", type: "lunar", lat: 0.67416, lon: 23.47314, wiki: "https://en.wikipedia.org/wiki/Apollo_11", img: "https://live.staticflickr.com/7656/17044835299_a25186a08f_b.jpg"},
+        { name: "Apollo 12", type: "lunar", lat: 3.01239, lon: -23.42157, wiki: "https://en.wikipedia.org/wiki/Apollo_12", img: "https://live.staticflickr.com/7674/17044838559_dd5a5ca998_b.jpg"},
+        { name: "Apollo 14", type: "lunar", lat: -3.64530, lon: -17.47136, wiki: "https://en.wikipedia.org/wiki/Apollo_14", img: "https://live.staticflickr.com/7693/16610813543_1cd8cb69bc_h.jpg"},
+        { name: "Apollo 15", type: "lunar", lat: 26.1322, lon: 3.6339, wiki: "https://en.wikipedia.org/wiki/Apollo_15", img: "https://live.staticflickr.com/7716/16611314493_a29c95a0ed_b.jpg"},
+        { name: "Apollo 16", type: "lunar", lat: -8.97301, lon: 15.50019, wiki: "https://en.wikipedia.org/wiki/Apollo_16", img: "https://live.staticflickr.com/5344/17230468331_0a5793ef72_h.jpg"},
+        { name: "Apollo 17", type: "lunar", lat: 20.1908, lon: 30.7717, wiki: "https://en.wikipedia.org/wiki/Apollo_17", img: "https://live.staticflickr.com/5345/17205076446_911061f0d2_h.jpg"},
+
+        { 
+            name: "Archimedes", 
+            type: "lunar", 
+            description: "Archimedes Crater lies at 30° north latitude centered between the eastern and western limbs. This 52-mile-wide (83 kilometers) impact crater lies just northwest of the Moon’s largest mountain range, the Montes Apenninus.", 
+            lat: 39.7, lon: -4.2, 
+            wiki: "https://en.wikipedia.org/wiki/Archimedes_(crater)", 
+            img: "https://astronomy.com/-/media/Images/News%20and%20Observing/News/2020/01/moon2.png?mw=1000&mh=800"
+        },
+
+        { 
+            name: "Sinus Iridum", 
+            type: "lunar", 
+            description: "Sinus Iridum, the Bay of Rainbows, on the Moon’s northwestern edge, spans a whopping 162 miles (260 km). Flanking Sinus Iridum to the north is the C-shaped mountain range Montes Jura.", 
+            lat: 45.01, lon: -31.67, 
+            wiki: "https://en.wikipedia.org/wiki/Sinus_Iridum", 
+            img: "https://astronomy.com/-/media/Images/News%20and%20Observing/News/2020/01/moon3.png?mw=1000&mh=800"
+        },
+
+        { 
+            name: "Clavius", 
+            type: "lunar", 
+            description: "Clavius Crater ranks as the third-largest crater on the Moon’s nearside. It’s visible to the naked eye and spans 140 miles (225 km). But it’s what’s in Clavius that I suggest you observe. Look for the crater chain of decreasing size that begins at Clavius’ eastern wall. ", 
+            lat: -58.4, lon: -14.4, 
+            wiki: "https://en.wikipedia.org/wiki/Clavius_(crater)", 
+            img: "https://astronomy.com/-/media/Images/News%20and%20Observing/News/2020/01/moon4.png?mw=1000&mh=800"
+        },
+
+        { 
+            name: "Copernicus", 
+            type: "lunar", 
+            description: "Copernicus Crater is one of the Moon’s most famous formations. This impact marks the center of a system of bright rays that extends for up to 500 miles (800 km). Copernicus measures 58 miles (93 km) wide. ", 
+            lat: 9.62, lon: -20.08, 
+            wiki: "https://en.wikipedia.org/wiki/Copernicus_(lunar_crater)", 
+            img: "https://astronomy.com/-/media/Images/News%20and%20Observing/News/2020/01/moon5.png?mw=1000&mh=800"
+        },
+
+        
     ]
     }
 }
