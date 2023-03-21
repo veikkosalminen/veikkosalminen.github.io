@@ -269,7 +269,7 @@
                     dateChange(new Date(pickedDate + " " + pickedTime + ":00"))
                 }
 
-                return <><span onClick={() => setShowPicker(true)}>{Functions.degmin(date)}</span>
+                return <><span onClick={() => setShowPicker(true)}>{Functions.niceDateForHeader(date)}</span>
                        {showPicker && <div className="modal is-active">
                         <div className="modal-background"></div>
                             <div className="modal-content">
