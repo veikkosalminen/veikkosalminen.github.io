@@ -23,63 +23,58 @@
         <div id="root"></div>
         <script type="text/babel">
 
-            const degminsec = (deg) => {
-                const d = Math.floor(deg)
-                const minfloat = (deg - d) * 60
-                const m = Math.floor(minfloat)
-                const secfloat = (minfloat - m) * 60
-                const s = Math.round(secfloat)
-                return `${d}° ${m}' ${s}"`
-            }
+            const Functions = {
 
-            const degmin = (deg) => {
-                const d = Math.floor(deg)
-                const minfloat = (deg - d) * 60
-                const m = Math.floor(minfloat)
-                return `${d}°`
-            }
+                degmin: (deg) => {
+                    const d = Math.floor(deg)
+                    const minfloat = (deg - d) * 60
+                    const m = Math.floor(minfloat)
+                    return `${d}°`
+                },
 
-            const niceDateForHeader = (date) => {
-                const now = new Date()
-                // Today 18:00
-                const month_names_short = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-                let dateStr = date.getDate() + "." + month_names_short[date.getMonth()]
+                niceDateForHeader: (date) => {
+                    const now = new Date()
+                    // Today 18:00
+                    const month_names_short = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                    let dateStr = date.getDate() + "." + month_names_short[date.getMonth()]
 
-                if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
-                    dateStr =  "Today"
-                }
+                    if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
+                        dateStr =  "Today"
+                    }
 
-                const time =  date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes()
+                    const time =  date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes()
 
-                return dateStr + " " + time
-            }
+                    return dateStr + " " + time
+                },
 
-            const hoursminsecToDegrees = ({hours, minutes, seconds}) => {
-                return (hours + minutes / 60 + seconds / 3600) * 15
-            }
+                getAutoTime: (date, lat, lon) => {
+                    const ephemeris = new Ephemeris.default({
+                        key: ["sun"],
+                        year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
+                        latitude: lat, longitude: lon,
+                        calculateShadows: false
+                    })
 
-            const getAutoTime = (date, lat, lon) => {
-                const ephemeris = new Ephemeris.default({
-                    key: ["sun"],
-                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
-                    latitude: lat, longitude: lon,
-                    calculateShadows: false
-                })
+                    const sunsetHour = ephemeris.sun.position.altaz.transit.approxSetUT.hours - date.getTimezoneOffset()/60
 
-                const sunsetHour = ephemeris.sun.position.altaz.transit.approxSetUT.hours - date.getTimezoneOffset()/60
+                    if (sunsetHour > date.getHours()) {
+                        date.setHours(sunsetHour + 2 <= 23 ? sunsetHour + 2 : 23)
+                        date.setMinutes(0)
+                    }
 
-                if (sunsetHour > date.getHours()) {
-                    date.setHours(sunsetHour + 2 <= 23 ? sunsetHour + 2 : 23)
-                    date.setMinutes(0)
-                }
+                    return date
+                },
 
-                return date
+                roundBy: (number, decimals) => {
+                    const rounder = Math.pow(10, decimals)
+                    return Math.round(number*rounder)/rounder
+                },
             }
 
             function ShowLocation({altaz, magnitude}) {
                 let {alt, az} = altaz
                
-                return <>👆 {degmin(alt)} &nbsp;&nbsp; 🧭 {degmin(az)} &nbsp;&nbsp; ✨ {magnitude} </>
+                return <>👆 {Functions.degmin(alt)} &nbsp;&nbsp; 🧭 {Functions.degmin(az)} &nbsp;&nbsp; ✨ {magnitude} </>
             }
 
             function Card({object}) {
@@ -235,11 +230,6 @@
                 </svg>
             }
 
-            const roundBy = (number, decimals) => {
-                const rounder = Math.pow(10, decimals)
-                return Math.round(number*rounder)/rounder
-            }
-
             function ObjectFilter({filterChange}) {
 
                 const [filter, setFilter] = React.useState(null)
@@ -279,7 +269,7 @@
                     dateChange(new Date(pickedDate + " " + pickedTime + ":00"))
                 }
 
-                return <><span onClick={() => setShowPicker(true)}>{niceDateForHeader(date)}</span>
+                return <><span onClick={() => setShowPicker(true)}>{Functions.degmin(date)}</span>
                        {showPicker && <div className="modal is-active">
                         <div className="modal-background"></div>
                             <div className="modal-content">
@@ -304,7 +294,7 @@
                         </>
             }
 
-            function MoonAndSunPhase({lat, lon, date, onClick }) {
+            function getMoonAndSunPhase({ lat, lon, date }) {
 
                 const ephemeris = new Ephemeris.default({
                     key: ["sun", "moon"],
@@ -320,7 +310,12 @@
                 const phaseEight = Math.floor(ephemeris.moon.position.phaseDecimal * 8)
                 const moonPhaseIcon = moonPhaseIcons[phaseEight]
 
-                return <span onClick={onClick}>{moonPhaseIcon} {moonPhase}% 👆 {moonAlt}° ☀️ {sunAlt}</span>
+                return {sunAlt, moonAlt, moonPhase, moonPhaseIcon}
+            }
+
+            function MoonAndSunPhase({lat, lon, date, onClick }) {
+                const {sunAlt, moonAlt, moonPhase, moonPhaseIcon} = getMoonAndSunPhase({lat, lon, date})
+                return <span onClick={() => !!onClick && onClick()}>{moonPhaseIcon} {moonPhase}% 👆 {moonAlt}° ☀️ {sunAlt}</span>
             }
 
             function SkyList({ date, objects, next, prev, lat, lon, filterChange, sectorChange, sector, dateChange, nightBarClicked }) {
@@ -343,7 +338,7 @@
                         <nav className="level is-mobile">
                             <div className="level-left">
                                 <p className="subtitle">
-                                    {roundBy(lat, 3)}° {roundBy(lon, 3)}°
+                                    {Functions.roundBy(lat, 3)}° {Functions.roundBy(lon, 3)}°
                                 </p>
                             </div>
                             <div className="level-right">
@@ -507,12 +502,19 @@
                 })
             }
 
-            function DayInCalendar({date}) {
-                return "🌑 10"
-                return "🌑 0% 👆 -13° ☀️ -11°"
+            function DayInCalendar({lat, lon, date}) {
+
+                const {sunAlt, moonAlt, moonPhase, moonPhaseIcon} = getMoonAndSunPhase({lat, lon, date})
+
+                return <div className="is-flex is-flex-direction-column is-align-items-center">
+                    <p>{date.getDate()}</p>
+                    <p style={{fontSize: "0.8em"}}>{moonPhaseIcon} {moonPhase}%</p>
+                    <p style={{fontSize: "0.8em"}}>🌙 {moonAlt}°</p>
+                    <p style={{fontSize: "0.8em"}}>☀️ {sunAlt}°</p>
+                </div>
             }
 
-            function createReactTableOfTheMonth({month}) {
+            function createReactTableOfTheMonth({month, lat, lon, date}) {
                 const rows = []
                 for (let i = 0; i < 6; i++) {
                     const row = []
@@ -522,7 +524,10 @@
                         const day = i * 7 + j - firstDayOfMonth.getDay()
                         const isRealDay = day > 0 && day <= howManyDaysInMonth
                         const className = day < 1 || day > howManyDaysInMonth ? "disabled" : ""
-                        row.push(<td key={j} className={className}>{isRealDay && <DayInCalendar date={day} />}</td>)
+                        const dayDate = new Date(date)
+                        dayDate.setMonth(month.month)
+                        dayDate.setDate(day)
+                        row.push(<td key={j} className="p-0">{isRealDay && <DayInCalendar lat={lat} lon={lon} date={dayDate} />}</td>)
                     }
                     rows.push(<tr key={i}>{row}</tr>)
                 }
@@ -538,12 +543,12 @@
                     </table>
                 }
 
-            function NightCalendar() {
+            function NightCalendar({lat, lon, date}) {
                 return <>
-                {createReactTableOfTheMonth({month: {year: (new Date()).getYear(), month: (new Date()).getMonth()}})}
-                {createReactTableOfTheMonth({month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 1}})}
-                {createReactTableOfTheMonth({month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 2}})}
-                {createReactTableOfTheMonth({month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 3}})}
+                {createReactTableOfTheMonth({lat: lat, lon: lon, date: date, month: {year: (new Date()).getYear(), month: (new Date()).getMonth()}})}
+                {createReactTableOfTheMonth({lat: lat, lon: lon, date: date, month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 1}})}
+                {createReactTableOfTheMonth({lat: lat, lon: lon, date: date, month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 2}})}
+                {createReactTableOfTheMonth({lat: lat, lon: lon, date: date, month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 3}})}
                 </>
             }
 
@@ -554,7 +559,7 @@
 
                 const [filter, setFilter] = React.useState(null)
                 const [sector, setSector] = React.useState(null)
-                const [date, setDate] = React.useState(getAutoTime(new Date(), lat, lon))
+                const [date, setDate] = React.useState(Functions.getAutoTime(new Date(), lat, lon))
                 const [showCalendar, setShowCalendar] = React.useState(false)
 
                 const skyObjects = getSkyObjects()
@@ -579,7 +584,7 @@
                 const orderObjects = objects.sort((a, b) => b.points - a.points)
 
                 return <>{ showCalendar ? 
-                        <NightCalendar /> :
+                        <NightCalendar lat={lat} lon={lon} date={date} /> :
                         <SkyList 
                             date={date} 
                             objects={orderObjects.slice(0, 30)} 
