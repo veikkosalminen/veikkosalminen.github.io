@@ -23,54 +23,6 @@
         <div id="root"></div>
         <script type="text/babel">
 
-            const lunarTargets = [
-                
-                { name: "Apollo 11", type: "lunar", lat: 0.67416, lon: 23.47314, wiki: "https://en.wikipedia.org/wiki/Apollo_11", img: "https://live.staticflickr.com/7656/17044835299_a25186a08f_b.jpg"},
-                { name: "Apollo 12", type: "lunar", lat: 3.01239, lon: -23.42157, wiki: "https://en.wikipedia.org/wiki/Apollo_12", img: "https://live.staticflickr.com/7674/17044838559_dd5a5ca998_b.jpg"},
-                { name: "Apollo 14", type: "lunar", lat: -3.64530, lon: -17.47136, wiki: "https://en.wikipedia.org/wiki/Apollo_14", img: "https://live.staticflickr.com/7693/16610813543_1cd8cb69bc_h.jpg"},
-                { name: "Apollo 15", type: "lunar", lat: 26.1322, lon: 3.6339, wiki: "https://en.wikipedia.org/wiki/Apollo_15", img: "https://live.staticflickr.com/7716/16611314493_a29c95a0ed_b.jpg"},
-                { name: "Apollo 16", type: "lunar", lat: -8.97301, lon: 15.50019, wiki: "https://en.wikipedia.org/wiki/Apollo_16", img: "https://live.staticflickr.com/5344/17230468331_0a5793ef72_h.jpg"},
-                { name: "Apollo 17", type: "lunar", lat: 20.1908, lon: 30.7717, wiki: "https://en.wikipedia.org/wiki/Apollo_17", img: "https://live.staticflickr.com/5345/17205076446_911061f0d2_h.jpg"},
-
-                { 
-                    name: "Archimedes", 
-                    type: "lunar", 
-                    description: "Archimedes Crater lies at 30° north latitude centered between the eastern and western limbs. This 52-mile-wide (83 kilometers) impact crater lies just northwest of the Moon’s largest mountain range, the Montes Apenninus.", 
-                    lat: 39.7, lon: -4.2, 
-                    wiki: "https://en.wikipedia.org/wiki/Archimedes_(crater)", 
-                    img: "https://astronomy.com/-/media/Images/News%20and%20Observing/News/2020/01/moon2.png?mw=1000&mh=800"
-                },
-
-                { 
-                    name: "Sinus Iridum", 
-                    type: "lunar", 
-                    description: "Sinus Iridum, the Bay of Rainbows, on the Moon’s northwestern edge, spans a whopping 162 miles (260 km). Flanking Sinus Iridum to the north is the C-shaped mountain range Montes Jura.", 
-                    lat: 45.01, lon: -31.67, 
-                    wiki: "https://en.wikipedia.org/wiki/Sinus_Iridum", 
-                    img: "https://astronomy.com/-/media/Images/News%20and%20Observing/News/2020/01/moon3.png?mw=1000&mh=800"
-                },
-
-                { 
-                    name: "Clavius", 
-                    type: "lunar", 
-                    description: "Clavius Crater ranks as the third-largest crater on the Moon’s nearside. It’s visible to the naked eye and spans 140 miles (225 km). But it’s what’s in Clavius that I suggest you observe. Look for the crater chain of decreasing size that begins at Clavius’ eastern wall. ", 
-                    lat: -58.4, lon: -14.4, 
-                    wiki: "https://en.wikipedia.org/wiki/Clavius_(crater)", 
-                    img: "https://astronomy.com/-/media/Images/News%20and%20Observing/News/2020/01/moon4.png?mw=1000&mh=800"
-                },
-
-                { 
-                    name: "Copernicus", 
-                    type: "lunar", 
-                    description: "Copernicus Crater is one of the Moon’s most famous formations. This impact marks the center of a system of bright rays that extends for up to 500 miles (800 km). Copernicus measures 58 miles (93 km) wide. ", 
-                    lat: 9.62, lon: -20.08, 
-                    wiki: "https://en.wikipedia.org/wiki/Copernicus_(lunar_crater)", 
-                    img: "https://astronomy.com/-/media/Images/News%20and%20Observing/News/2020/01/moon5.png?mw=1000&mh=800"
-                },
-
-                
-            ]
-
             const degminsec = (deg) => {
                 const d = Math.floor(deg)
                 const minfloat = (deg - d) * 60
@@ -352,7 +304,7 @@
                         </>
             }
 
-            function MoonAndSunPhase({lat, lon, date}) {
+            function MoonAndSunPhase({lat, lon, date, onClick }) {
 
                 const ephemeris = new Ephemeris.default({
                     key: ["sun", "moon"],
@@ -368,10 +320,10 @@
                 const phaseEight = Math.floor(ephemeris.moon.position.phaseDecimal * 8)
                 const moonPhaseIcon = moonPhaseIcons[phaseEight]
 
-                return `${moonPhaseIcon} ${moonPhase}% 👆 ${moonAlt}° ☀️ ${sunAlt}°`
+                return <span onClick={onClick}>{moonPhaseIcon} {moonPhase}% 👆 {moonAlt}° ☀️ {sunAlt}</span>
             }
 
-            function SkyList({ date, objects, next, prev, lat, lon, filterChange, sectorChange, sector, dateChange }) {
+            function SkyList({ date, objects, next, prev, lat, lon, filterChange, sectorChange, sector, dateChange, nightBarClicked }) {
                 return <section className="section">
                     <div className="container">
                         <nav className="level is-mobile">
@@ -387,7 +339,7 @@
                                 </div>
                             </div>
                         </nav>
-                        <div><MoonAndSunPhase lat={lat} lon={lon} date={date} /></div>
+                        <div><MoonAndSunPhase lat={lat} lon={lon} date={date} onClick={() => nightBarClicked()} /></div>
                         <nav className="level is-mobile">
                             <div className="level-left">
                                 <p className="subtitle">
@@ -555,6 +507,46 @@
                 })
             }
 
+            function DayInCalendar({date}) {
+                return "🌑 10"
+                return "🌑 0% 👆 -13° ☀️ -11°"
+            }
+
+            function createReactTableOfTheMonth({month}) {
+                const rows = []
+                for (let i = 0; i < 6; i++) {
+                    const row = []
+                    for (let j = 0; j < 7; j++) {
+                        const firstDayOfMonth = new Date(month.year, month.month, 1)
+                        const howManyDaysInMonth = new Date(month.year, month.month + 1, 0).getDate()
+                        const day = i * 7 + j - firstDayOfMonth.getDay()
+                        const isRealDay = day > 0 && day <= howManyDaysInMonth
+                        const className = day < 1 || day > howManyDaysInMonth ? "disabled" : ""
+                        row.push(<td key={j} className={className}>{isRealDay && <DayInCalendar date={day} />}</td>)
+                    }
+                    rows.push(<tr key={i}>{row}</tr>)
+                }
+                return <table className="table" style={{width: "100%"}}>
+                    <thead>
+                    <tr>
+                    <th>Ma</th><th>Ti</th><th>Ke</th><th>To</th><th>Pe</th><th>La</th><th>Su</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {rows}
+                    </tbody>
+                    </table>
+                }
+
+            function NightCalendar() {
+                return <>
+                {createReactTableOfTheMonth({month: {year: (new Date()).getYear(), month: (new Date()).getMonth()}})}
+                {createReactTableOfTheMonth({month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 1}})}
+                {createReactTableOfTheMonth({month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 2}})}
+                {createReactTableOfTheMonth({month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 3}})}
+                </>
+            }
+
             function Main() {
 
                 const lat = 60.812171
@@ -563,6 +555,7 @@
                 const [filter, setFilter] = React.useState(null)
                 const [sector, setSector] = React.useState(null)
                 const [date, setDate] = React.useState(getAutoTime(new Date(), lat, lon))
+                const [showCalendar, setShowCalendar] = React.useState(false)
 
                 const skyObjects = getSkyObjects()
 
@@ -570,7 +563,7 @@
                     fillMessierData({objects: skyObjects.messier, lat: lat, lon: lon, date: date}), 
                     fillMessierData({objects: skyObjects.others, lat: lat, lon: lon, date: date}), 
                     fillPlanetData({objects: skyObjects.planets, lat: lat, lon: lon, date: date}),
-                    fillLunarData({objects: lunarTargets, lat: lat, lon: lon, date: date}),
+                    fillLunarData({objects: skyObjects.lunarTargets, lat: lat, lon: lon, date: date}),
                 )
                 
 
@@ -585,17 +578,21 @@
 
                 const orderObjects = objects.sort((a, b) => b.points - a.points)
 
-                return <SkyList 
-                    date={date} 
-                    objects={orderObjects.slice(0, 30)} 
-                    prev={() => setDate(new Date(date.setDate(date.getDate() - 1)))} 
-                    next={() => setDate(new Date(date.setDate(date.getDate() + 1)))}
-                    lat={lat} lon={lon} 
-                    filterChange={(filter) => setFilter(filter)}
-                    sector={sector}
-                    sectorChange={(sector) => setSector(sector)}
-                    dateChange={(date) => setDate(date)}
-                />
+                return <>{ showCalendar ? 
+                        <NightCalendar /> :
+                        <SkyList 
+                            date={date} 
+                            objects={orderObjects.slice(0, 30)} 
+                            prev={() => setDate(new Date(date.setDate(date.getDate() - 1)))} 
+                            next={() => setDate(new Date(date.setDate(date.getDate() + 1)))}
+                            lat={lat} lon={lon} 
+                            filterChange={(filter) => setFilter(filter)}
+                            sector={sector}
+                            sectorChange={(sector) => setSector(sector)}
+                            dateChange={(date) => setDate(date)}
+                            nightBarClicked={() => setShowCalendar(true)}
+                        />
+                }</>
             }
 
             ReactDOM.render(
