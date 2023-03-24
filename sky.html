@@ -131,12 +131,19 @@
                 const [altaz, setAltaz] = React.useState({alt: null, az: null})
 
                 React.useEffect(() => {
-                    const interval = setInterval(async () => {
+
+                    const updateAltaz = async () => {
                         const response = await fetch(`${telescopeUrl}/SynScan.HORIZONTAL_COORD.*`)
                         const data = await response.text()
                         const {alt, az} = parseResponse(data)
                         setAltaz({alt, az})
-                    }, 2000)
+                    }
+
+                    updateAltaz()
+
+                    // fetch every 5 seconds
+                    const interval = setInterval(updateAltaz, 5000)
+
                     return () => clearInterval(interval)
                 }, [])
 
@@ -160,13 +167,13 @@
                         <div className="modal-content">
                             <div className="is-flex is-flex-direction-column is-align-items-center">
                                 {telescopeReady &&
-                                    <div>
+                                    <div className="mb-4">
                                         <p>ALT: {Functions.degminsec(altaz.alt)} </p>
                                         <p>AZ: {Functions.degminsec(altaz.az)}</p>
                                     </div>
                                 }
                                 <SkyMap current={altaz} goal={goal.altaz} />
-                                <button onClick={() => turnTelescope()} className={`button is-primary ${!telescopeReady && "is-loading"}`}>Turn telescope</button>
+                                <button onClick={() => turnTelescope()} className={`button is-primary mt-6 ${!telescopeReady && "is-loading"}`}>Turn telescope</button>
                             </div>
                         </div>
                         <button onClick={() => onClose()} className="modal-close is-large" aria-label="close"></button>
@@ -189,7 +196,7 @@
 
                 const color = "#0055ab"
 
-                return <svg width="400" height="400" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                return <svg width="300" height="300" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
                     <g>
                         <ellipse cy="400" cx="400" ry="380" rx="380" stroke={color} fill="#061329" strokeWidth="10"/>
                         <ellipse cy="400" cx="400" ry="200" rx="200" stroke={color} fill="none" strokeWidth="7" />
@@ -212,22 +219,6 @@
 
                 const {name, img, stars, points, altaz, description, magnitude, link } = object
 
-                console.log("object", object)
-
-                const turnTelescope = () => {
-                    /*const {ra, dec} = radec
-                    
-                    const url = `${telescopeUrl}/SynScan.EQUATORIAL_EOD_COORD.RA;DEC/${Functions.roundBy(ra, 4)};${Functions.roundBy(dec, 4)}`
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    })*/
-                    setShowTelescope(true)
-                }
-
                 return <><div className="block"><div className="card">
                     <div className="card-image">
                         <figure className="image is-4by4">
@@ -238,7 +229,7 @@
                         <div className="media">
                         <div className="media-left">
                             <figure className="image is-48x48">
-                            <MapIcon altaz={altaz} onClick={() => turnTelescope()} />
+                            <MapIcon altaz={altaz} onClick={() => setShowTelescope(true)} />
                             </figure>
                         </div>
                         <div className="media-content">
@@ -626,8 +617,10 @@
                     const alt = ephemeri.position.altaz.topocentric.altitude
                     const az = ephemeri.position.altaz.topocentric.azimuth
                     const altaz = {alt, az}
-                    const ra = ephemeri.position.apparent.dRA
-                    const dec = ephemeri.position.apparent.dDec
+                    const decObj = ephemeri.position.altaz.topocentric.dDec // as hours, minutes, seconds
+                    const raObj = ephemeri.position.altaz.topocentric.dRA
+                    const dec = decObj.degree + decObj.minutes/60 + decObj.seconds/3600
+                    const ra = raObj.hours + raObj.minutes/60 + raObj.seconds/3600
                     const radec = {ra, dec}
                     const link = "https://en.wikipedia.org/wiki/" + planet.name
                     const stellariumLink = `https://stellarium-web.org/skysource/${planet.name}?fov=120.00&date=${date.toISOString()}&lat=${lat}&lng=${lon}&elev=0`
