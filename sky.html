@@ -133,7 +133,7 @@
                 React.useEffect(() => {
 
                     const updateAltaz = async () => {
-                        const response = await fetch(`${telescopeUrl}/SynScan.HORIZONTAL_COORD.*`)
+                        const response = await fetch(`${telescopeUrl}/SynScan.HORIZONTAL_COORD.AZ,SynScan.HORIZONTAL_COORD.ALT`)
                         const data = await response.text()
                         const {alt, az} = parseResponse(data)
                         setAltaz({alt, az})
@@ -141,8 +141,8 @@
 
                     updateAltaz()
 
-                    // fetch every 5 seconds
-                    const interval = setInterval(updateAltaz, 5000)
+                    // fetch every 1 seconds
+                    const interval = setInterval(updateAltaz, 1000)
 
                     return () => clearInterval(interval)
                 }, [])
