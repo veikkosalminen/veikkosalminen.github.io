@@ -23,7 +23,7 @@
         <div id="root"></div>
         <script type="text/babel">
 
-            const telescopeUrl = "https://0b0b-2001-999-281-445-8811-9641-1119-4.eu.ngrok.io"
+            const telescopeUrl = "https://bd64-2001-999-281-445-8811-9641-1119-4.eu.ngrok.io"
 
             const Functions = {
 
@@ -182,6 +182,8 @@
                 const x = 400 - size * Math.sin(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
                 const y = 400 - size * Math.cos(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
 
+                const telescopeReady = current.az || current.alt
+
                 const cx = 400 - size * Math.sin(current.az * Math.PI / 180) * Math.cos(current.alt * Math.PI / 180)
                 const cy = 400 - size * Math.cos(current.az * Math.PI / 180) * Math.cos(current.alt * Math.PI / 180)
 
@@ -198,7 +200,7 @@
                         <line y2="670" x2="130" y1="130" x1="670" stroke={color} fill="none" strokeWidth="3" />
 
                         <ellipse cy={y} cx={x} ry="10" rx="10" stroke="yellow" fill="yellow" />
-                        {!cy && !cx && <ellipse cy={cy} cx={cx} ry="5" rx="5" stroke="red" fill="red" />}
+                        {telescopeReady && <ellipse cy={cy} cx={cx} ry="5" rx="5" stroke="red" fill="red" />}
                         
                     </g>
                 </svg>
