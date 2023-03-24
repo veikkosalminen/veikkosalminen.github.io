@@ -23,6 +23,8 @@
         <div id="root"></div>
         <script type="text/babel">
 
+            const telescopeUrl = "https://0b0b-2001-999-281-445-8811-9641-1119-4.eu.ngrok.io"
+
             const Functions = {
 
                 degmin: (deg) => {
@@ -30,6 +32,15 @@
                     const minfloat = (deg - d) * 60
                     const m = Math.floor(minfloat)
                     return `${d}°`
+                },
+
+                degminsec: (deg) => {
+                    const d = Math.floor(deg)
+                    const minfloat = (deg - d) * 60
+                    const m = Math.floor(minfloat)
+                    const secfloat = (minfloat - m) * 60
+                    const s = Math.round(secfloat)
+                    return `${d}° ${(m < 10 ? "0" : "") + m}' ${(s < 10 ? "0" : "") + s}"`
                 },
 
                 niceDateForHeader: (date) => {
@@ -69,19 +80,153 @@
                     const rounder = Math.pow(10, decimals)
                     return Math.round(number*rounder)/rounder
                 },
+
+                parsecol: (str) => {
+                    var col1=str.indexOf(":");
+                    var col2=str.lastIndexOf(":");
+                    if (col1 < 0) return parseInt(str);
+                    if (str.substring(0,1) == "-") {
+                        var res=parseInt(str.substring(1,col1),10);
+                    } else {
+                        var res=parseInt(str.substring(0,col1),10);
+                    }
+                    if (col2 > col1) {
+                        res+=(parseInt(str.substring(col1+1,col2),10)/60.0) +
+                            (parseInt(str.substring(col2+1,str.length),10)/3600.0);
+                    } else {
+                        res+=(parseInt(str.substring(col1+1,str.length),10)/60.0);
+                    }
+                    if (str.substring(0,1) == "-") {
+                        return -res;
+                    } else {
+                        return res;
+                    }
+                }
             }
 
-            function ShowLocation({altaz, magnitude}) {
+            function ShowLocation({altaz, magnitude, close}) {
                 let {alt, az} = altaz
                
                 return <>👆 {Functions.degmin(alt)} &nbsp;&nbsp; 🧭 {Functions.degmin(az)} &nbsp;&nbsp; ✨ {magnitude} </>
             }
 
+            /**
+             * SynScan.HORIZONTAL_COORD.AZ=157.07492351531982422
+             * SynScan.HORIZONTAL_COORD.ALT=69.409625530242919922
+             */
+            const parseResponse = (response) => {
+                const lines = response.split("\n")
+                const ret = {}
+                lines.forEach( (line) => {
+                    if (line == "") return
+                    const [key, value] = line.split("=")
+                    const splittedKey = key.split(".")
+                    ret[splittedKey[2].toLowerCase()] = value
+                })
+
+                return ret
+            }
+
+            function Telescope({ onClose, goal }) {
+                const [altaz, setAltaz] = React.useState({alt: null, az: null})
+
+                React.useEffect(() => {
+                    const interval = setInterval(async () => {
+                        const response = await fetch(`${telescopeUrl}/SynScan.HORIZONTAL_COORD.*`)
+                        const data = await response.text()
+                        const {alt, az} = parseResponse(data)
+                        setAltaz({alt, az})
+                    }, 2000)
+                    return () => clearInterval(interval)
+                }, [])
+
+                const turnTelescope = () => {
+                    const {ra, dec} = goal.radec
+                    
+                    const url = `${telescopeUrl}/SynScan.EQUATORIAL_EOD_COORD.RA;DEC/${Functions.roundBy(ra, 4)};${Functions.roundBy(dec, 4)}`
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                }
+
+                const telescopeReady = altaz.az || altaz.alt
+
+                return <div className="modal is-active">
+                        <div className="modal-background"></div>
+                        <div className="modal-content">
+                            <div className="is-flex is-flex-direction-column is-align-items-center">
+                                {telescopeReady &&
+                                    <div>
+                                        <p>ALT: {Functions.degminsec(altaz.alt)} </p>
+                                        <p>AZ: {Functions.degminsec(altaz.az)}</p>
+                                    </div>
+                                }
+                                <SkyMap current={altaz} goal={goal.altaz} />
+                                <button onClick={() => turnTelescope()} className={`button is-primary ${!telescopeReady && "is-loading"}`}>Turn telescope</button>
+                            </div>
+                        </div>
+                        <button onClick={() => onClose()} className="modal-close is-large" aria-label="close"></button>
+                    </div>
+            }
+
+            function SkyMap({goal, current}) {
+
+                const size = 380
+
+                // convert altitude and azimuth to x and y coordinates
+                const {alt, az} = goal
+                const x = 400 - size * Math.sin(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
+                const y = 400 - size * Math.cos(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
+
+                const cx = 400 - size * Math.sin(current.az * Math.PI / 180) * Math.cos(current.alt * Math.PI / 180)
+                const cy = 400 - size * Math.cos(current.az * Math.PI / 180) * Math.cos(current.alt * Math.PI / 180)
+
+                const color = "#0055ab"
+
+                return <svg width="400" height="400" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                    <g>
+                        <ellipse cy="400" cx="400" ry="380" rx="380" stroke={color} fill="#061329" strokeWidth="10"/>
+                        <ellipse cy="400" cx="400" ry="200" rx="200" stroke={color} fill="none" strokeWidth="7" />
+                        
+                        <line y2="400" x2="780" y1="400" x1="20" stroke={color} fill="none" strokeWidth="10" />
+                        <line y2="130" x2="130" y1="670" x1="670" stroke={color} fill="none" strokeWidth="3" />
+                        <line y2="780" x2="400" y1="20" x1="400" stroke={color} fill="none" strokeWidth="10" />
+                        <line y2="670" x2="130" y1="130" x1="670" stroke={color} fill="none" strokeWidth="3" />
+
+                        <ellipse cy={y} cx={x} ry="10" rx="10" stroke="yellow" fill="yellow" />
+                        {!cy && !cx && <ellipse cy={cy} cx={cx} ry="5" rx="5" stroke="red" fill="red" />}
+                        
+                    </g>
+                </svg>
+            }
+
             function Card({object}) {
+
+                const [showTelescope, setShowTelescope] = React.useState(false)
 
                 const {name, img, stars, points, altaz, description, magnitude, link } = object
 
-                return <div className="block"><div className="card">
+                console.log("object", object)
+
+                const turnTelescope = () => {
+                    /*const {ra, dec} = radec
+                    
+                    const url = `${telescopeUrl}/SynScan.EQUATORIAL_EOD_COORD.RA;DEC/${Functions.roundBy(ra, 4)};${Functions.roundBy(dec, 4)}`
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    })*/
+                    setShowTelescope(true)
+                }
+
+                return <><div className="block"><div className="card">
                     <div className="card-image">
                         <figure className="image is-4by4">
                         <img src={img || "https://bulma.io/images/placeholders/1280x960.png"} alt="Placeholder image" />
@@ -91,7 +236,7 @@
                         <div className="media">
                         <div className="media-left">
                             <figure className="image is-48x48">
-                            <MapIcon altaz={altaz} />
+                            <MapIcon altaz={altaz} onClick={() => turnTelescope()} />
                             </figure>
                         </div>
                         <div className="media-content">
@@ -109,6 +254,8 @@
                     </div>
                     </div>
                     </div>
+                    {showTelescope && <Telescope onClose={() => setShowTelescope(false)} goal={object} />}
+                    </>
             }
 
             function MoonIcon({lat, lon}) {
@@ -167,7 +314,7 @@
                     </div>
                 }
 
-            function MapIcon({altaz}) {
+            function MapIcon({altaz, onClick}) {
 
                 const size = 380
 
@@ -178,7 +325,7 @@
 
                 const color = "#0055ab"
 
-                return <svg width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                return <svg onClick={onClick} width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
                     <g>
                         <ellipse cy="400" cx="400" ry="380" rx="380" stroke={color} fill="#061329" strokeWidth="10"/>
                         <ellipse cy="400" cx="400" ry="200" rx="200" stroke={color} fill="none" strokeWidth="7" />
@@ -434,6 +581,7 @@
 
                 return objects.map((obj) => {
                     const altaz = RadToAA(obj.ra, obj.dec, obs)
+                    const radec = {ra: Functions.parsecol(obj.ra), dec: Functions.parsecol(obj.dec)}
                     //const img = images[obj.name]
                     const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "planetarynebulae", DN: "diffusenebulae"}
                     const astroPixelType = obj.name === "M1" ? "supernovae" : typeMap[obj.messiertype]
@@ -443,7 +591,7 @@
                     const stellariumLink = `https://stellarium-web.org/skysource/${obj.name}?fov=120.00&date=${date.toISOString()}&lat=${lat}&lng=${lon}&elev=0`
                     const description = <>{obj.description} <a href={wikiLink}>@wikipedia</a> <a href={stellariumLink}>@stellarium</a></>
                     
-                    return {...obj, altaz, img, description}
+                    return {...obj, altaz, radec, img, description}
                 })
             }
 
@@ -469,15 +617,20 @@
                     calculateShadows: false
                 })
 
+                console.log(ephemeris)
+
                 return objects.map( planet => {
                     const ephemeri = ephemeris[planet.name.toLowerCase()]
                     const alt = ephemeri.position.altaz.topocentric.altitude
                     const az = ephemeri.position.altaz.topocentric.azimuth
                     const altaz = {alt, az}
+                    const ra = ephemeri.position.apparent.dRA
+                    const dec = ephemeri.position.apparent.dDec
+                    const radec = {ra, dec}
                     const link = "https://en.wikipedia.org/wiki/" + planet.name
                     const stellariumLink = `https://stellarium-web.org/skysource/${planet.name}?fov=120.00&date=${date.toISOString()}&lat=${lat}&lng=${lon}&elev=0`
                     const description = <>{planet.description} <a href={link}>@wikipedia</a> <a href={stellariumLink}>@stellarium</a></>
-                    return {...planet, altaz, magnitude: ephemeri.magnitude | 0, description}
+                    return {...planet, altaz, radec, magnitude: ephemeri.magnitude | 0, description}
                 })
             }
 
