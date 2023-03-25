@@ -23,7 +23,7 @@
         <div id="root"></div>
         <script type="text/babel">
 
-            const telescopeUrl = "https://bd64-2001-999-281-445-8811-9641-1119-4.eu.ngrok.io"
+            const telescopeUrl = "https://5e54-2001-999-281-445-8811-9641-1119-4.eu.ngrok.io"
 
             const Functions = {
 
@@ -700,6 +700,43 @@
                 </>
             }
 
+            function Camera() {
+
+                const [image, setImage] = React.useState(null)
+                const [loading, setLoading] = React.useState(false)
+
+                const sleep = () => new Promise(resolve => setTimeout(resolve, 5000))
+
+                const takePhoto = async () => {
+                    setLoading(true)
+                    setImage(null)
+                    try {
+                        const response = await fetch(`${telescopeUrl}/GPhoto CCD.CCD_EXPOSURE.CCD_EXPOSURE_VALUE/0.0001`, {method: "POST"})
+                        console.log(await response.text())
+                    }
+                    catch (e) {
+                        console.log(e)
+                    }
+                    await sleep()
+                    
+                    setImage("newest")
+                    setLoading(false)
+                }
+
+                return <div className="modal is-active">
+                    <div className="modal-background"></div>
+                        <div className="modal-content">
+                            <div className="is-flex is-flex-direction-column is-align-items-center">
+                                {image && <figure className="image is-4by4">
+                                    <img src={telescopeUrl + "/image/" + image} />
+                                </figure>}
+                                <button className={`button is-primary mt-6 ${loading && "is-loading"}`} onClick={() => takePhoto()}>Take photo</button>
+                            </div>
+                        </div>
+                    <button className="modal-close is-large" aria-label="close"></button>
+                </div>
+            }
+
             function Main() {
 
                 const lat = 60.812171
@@ -733,7 +770,7 @@
 
                 return <>{ showCalendar ? 
                         <NightCalendar lat={lat} lon={lon} date={date} /> :
-                        <SkyList 
+                        <><SkyList 
                             date={date} 
                             objects={orderObjects.slice(0, 30)} 
                             prev={() => setDate(new Date(date.setDate(date.getDate() - 1)))} 
@@ -745,6 +782,8 @@
                             dateChange={(date) => setDate(date)}
                             nightBarClicked={() => setShowCalendar(true)}
                         />
+                        <Camera />
+                        </>
                 }</>
             }
 
