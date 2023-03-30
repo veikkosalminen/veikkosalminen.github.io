@@ -91,7 +91,7 @@ const requestListener = async (req, res) => {
     }
 
     
-    //if (req.method === "GET") return res.end(getIndexHTML())
+    if (req.method === "GET" && req.url === "index") return res.end(getIndexHTML())
 
     const splitted = req.url.split("/")
 
