@@ -20,7 +20,7 @@ const host = '0.0.0.0';
 const port = 8001;
 
 const getIndexHTML = () => {
-        return fs.readFileSync('./index.html', {encoding:'utf8', flag:'r'});
+        return fs.readFileSync('./sky.html', {encoding:'utf8', flag:'r'});
 }
 
 const executeCommand = (command) => {
