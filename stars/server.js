@@ -3,7 +3,7 @@ const http = require("http");
 var path = require('path');
 const fs = require('fs');
 
-var dir = path.join(__dirname, '..');
+var dir = path.join(__dirname, '../..');
 var mime = {
     html: 'text/html',
     txt: 'text/plain',
@@ -43,7 +43,7 @@ const executeCommand = (command) => {
 }
 
 const getNewestImage = () => {
-        var files = fs.readdirSync(path.join(dir, "../.."));
+        var files = fs.readdirSync(dir);
         let max = 0
         let filename = null
         for (let file of files) {
