@@ -468,10 +468,11 @@
                                 </h1>
                             </div>
                             <div className="level-right">
-                                <div className="buttons has-addons">
+                                {/*<div className="buttons has-addons">
                                     <button onClick={() => prev && prev()} className="button">◀︎</button>
                                     <button onClick={() => next && next()} className="button">▶︎</button>
-                                </div>
+                                </div>*/}
+                                <button className="button">📷</button>
                             </div>
                         </nav>
                         <div><MoonAndSunPhase lat={lat} lon={lon} date={date} onClick={() => nightBarClicked()} /></div>
@@ -746,6 +747,7 @@
                 const [sector, setSector] = React.useState(null)
                 const [date, setDate] = React.useState(Functions.getAutoTime(new Date(), lat, lon))
                 const [showCalendar, setShowCalendar] = React.useState(false)
+                const [showCamera, setShowCamera] = React.useState(false)
 
                 const skyObjects = getSkyObjects()
 
@@ -782,7 +784,7 @@
                             dateChange={(date) => setDate(date)}
                             nightBarClicked={() => setShowCalendar(true)}
                         />
-                        <Camera />
+                        {showCamera && <Camera />}
                         </>
                 }</>
             }
