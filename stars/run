@@ -1,0 +1,6 @@
+
+/usr/bin/nohup node server.js &
+
+/usr/bin/nohup ngrok http 8001 &
+sleep 3
+curl localhost:4040/api/tunnels
