@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Sky 🪐</title>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <link rel="stylesheet" href="https://jenil.github.io/bulmaswatch/darkly/bulmaswatch.min.css">
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+        <script src="https://veikkosalminen.github.io/ephemeris-1.2.1.bundle.js"></script>
+        <script src="https://veikkosalminen.github.io/radtoaa.js"></script>
+        <script src="https://veikkosalminen.github.io/sky-objects.js"></script>
+        
+
+        <!-- Don't use this in production: -->
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="text/babel">
+
+            const telescopeUrl = "https://5e54-2001-999-281-445-8811-9641-1119-4.eu.ngrok.io"
+
+            const Functions = {
+
+                degmin: (deg) => {
+                    const d = Math.floor(deg)
+                    const minfloat = (deg - d) * 60
+                    const m = Math.floor(minfloat)
+                    return `${d}°`
+                },
+
+                degminsec: (deg) => {
+                    const d = Math.floor(deg)
+                    const minfloat = (deg - d) * 60
+                    const m = Math.floor(minfloat)
+                    const secfloat = (minfloat - m) * 60
+                    const s = Math.round(secfloat)
+                    return `${d}° ${(m < 10 ? "0" : "") + m}' ${(s < 10 ? "0" : "") + s}"`
+                },
+
+                niceDateForHeader: (date) => {
+                    const now = new Date()
+                    // Today 18:00
+                    const month_names_short = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                    let dateStr = date.getDate() + "." + month_names_short[date.getMonth()]
+
+                    if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
+                        dateStr =  "Today"
+                    }
+
+                    const time =  date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes()
+
+                    return dateStr + " " + time
+                },
+
+                getAutoTime: (date, lat, lon) => {
+                    const ephemeris = new Ephemeris.default({
+                        key: ["sun"],
+                        year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
+                        latitude: lat, longitude: lon,
+                        calculateShadows: false
+                    })
+
+                    const sunsetHour = ephemeris.sun.position.altaz.transit.approxSetUT.hours - date.getTimezoneOffset()/60
+
+                    if (sunsetHour > date.getHours()) {
+                        date.setHours(sunsetHour + 2 <= 23 ? sunsetHour + 2 : 23)
+                        date.setMinutes(0)
+                    }
+
+                    return date
+                },
+
+                roundBy: (number, decimals) => {
+                    const rounder = Math.pow(10, decimals)
+                    return Math.round(number*rounder)/rounder
+                },
+
+                parsecol: (str) => {
+                    var col1=str.indexOf(":");
+                    var col2=str.lastIndexOf(":");
+                    if (col1 < 0) return parseInt(str);
+                    if (str.substring(0,1) == "-") {
+                        var res=parseInt(str.substring(1,col1),10);
+                    } else {
+                        var res=parseInt(str.substring(0,col1),10);
+                    }
+                    if (col2 > col1) {
+                        res+=(parseInt(str.substring(col1+1,col2),10)/60.0) +
+                            (parseInt(str.substring(col2+1,str.length),10)/3600.0);
+                    } else {
+                        res+=(parseInt(str.substring(col1+1,str.length),10)/60.0);
+                    }
+                    if (str.substring(0,1) == "-") {
+                        return -res;
+                    } else {
+                        return res;
+                    }
+                }
+            }
+
+            function ShowLocation({altaz, magnitude, close}) {
+                let {alt, az} = altaz
+               
+                return <>👆 {Functions.degmin(alt)} &nbsp;&nbsp; 🧭 {Functions.degmin(az)} &nbsp;&nbsp; ✨ {magnitude} </>
+            }
+
+            /**
+             * SynScan.HORIZONTAL_COORD.AZ=157.07492351531982422
+             * SynScan.HORIZONTAL_COORD.ALT=69.409625530242919922
+             */
+            const parseResponse = (response) => {
+                const lines = response.split("\n")
+                const ret = {}
+                lines.forEach( (line) => {
+                    if (line == "") return
+                    const [key, value] = line.split("=")
+                    const splittedKey = key.split(".")
+                    ret[splittedKey[2].toLowerCase()] = value
+                })
+
+                return ret
+            }
+
+            function Telescope({ onClose, goal }) {
+                const [altaz, setAltaz] = React.useState({alt: null, az: null})
+
+                React.useEffect(() => {
+
+                    const updateAltaz = async () => {
+                        const response = await fetch(`${telescopeUrl}/SynScan.HORIZONTAL_COORD.AZ,SynScan.HORIZONTAL_COORD.ALT`)
+                        const data = await response.text()
+                        const {alt, az} = parseResponse(data)
+                        setAltaz({alt, az})
+                    }
+
+                    updateAltaz()
+
+                    // fetch every 1 seconds
+                    const interval = setInterval(updateAltaz, 1000)
+
+                    return () => clearInterval(interval)
+                }, [])
+
+                const turnTelescope = () => {
+                    const {ra, dec} = goal.radec
+                    
+                    const url = `${telescopeUrl}/SynScan.EQUATORIAL_EOD_COORD.RA;DEC/${Functions.roundBy(ra, 4)};${Functions.roundBy(dec, 4)}`
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                }
+
+                const telescopeReady = altaz.az || altaz.alt
+
+                return <div className="modal is-active">
+                        <div className="modal-background"></div>
+                        <div className="modal-content">
+                            <div className="is-flex is-flex-direction-column is-align-items-center">
+                                {telescopeReady &&
+                                    <div className="mb-4">
+                                        <p>ALT: {Functions.degminsec(altaz.alt)} </p>
+                                        <p>AZ: {Functions.degminsec(altaz.az)}</p>
+                                    </div>
+                                }
+                                <SkyMap current={altaz} goal={goal.altaz} />
+                                <button onClick={() => turnTelescope()} className={`button is-primary mt-6 ${!telescopeReady && "is-loading"}`}>Turn telescope</button>
+                            </div>
+                        </div>
+                        <button onClick={() => onClose()} className="modal-close is-large" aria-label="close"></button>
+                    </div>
+            }
+
+            function SkyMap({goal, current}) {
+
+                const size = 380
+
+                // convert altitude and azimuth to x and y coordinates
+                const {alt, az} = goal
+                const x = 400 - size * Math.sin(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
+                const y = 400 - size * Math.cos(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
+
+                const telescopeReady = current.az || current.alt
+
+                const cx = 400 - size * Math.sin(current.az * Math.PI / 180) * Math.cos(current.alt * Math.PI / 180)
+                const cy = 400 - size * Math.cos(current.az * Math.PI / 180) * Math.cos(current.alt * Math.PI / 180)
+
+                const color = "#0055ab"
+
+                return <svg width="300" height="300" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                    <g>
+                        <ellipse cy="400" cx="400" ry="380" rx="380" stroke={color} fill="#061329" strokeWidth="10"/>
+                        <ellipse cy="400" cx="400" ry="200" rx="200" stroke={color} fill="none" strokeWidth="7" />
+                        
+                        <line y2="400" x2="780" y1="400" x1="20" stroke={color} fill="none" strokeWidth="10" />
+                        <line y2="130" x2="130" y1="670" x1="670" stroke={color} fill="none" strokeWidth="3" />
+                        <line y2="780" x2="400" y1="20" x1="400" stroke={color} fill="none" strokeWidth="10" />
+                        <line y2="670" x2="130" y1="130" x1="670" stroke={color} fill="none" strokeWidth="3" />
+
+                        <ellipse cy={y} cx={x} ry="10" rx="10" stroke="yellow" fill="yellow" />
+                        {telescopeReady && <ellipse cy={cy} cx={cx} ry="5" rx="5" stroke="red" fill="red" />}
+                        
+                    </g>
+                </svg>
+            }
+
+            function Card({object}) {
+
+                const [showTelescope, setShowTelescope] = React.useState(false)
+
+                const {name, img, stars, points, altaz, description, magnitude, link } = object
+
+                return <><div className="block"><div className="card">
+                    <div className="card-image">
+                        <figure className="image is-4by4">
+                        <img src={img || "https://bulma.io/images/placeholders/1280x960.png"} alt="Placeholder image" />
+                        </figure>
+                    </div>
+                    <div className="card-content">
+                        <div className="media">
+                        <div className="media-left">
+                            <figure className="image is-48x48">
+                            <MapIcon altaz={altaz} onClick={() => setShowTelescope(true)} />
+                            </figure>
+                        </div>
+                        <div className="media-content">
+                            <p className="title is-4">{name}</p>
+                            <p className="subtitle is-7">{!!altaz && <ShowLocation altaz={altaz} magnitude={magnitude} />}</p>
+                        </div>
+                        </div>
+
+                        <div className="content">
+                        { description } {!!link && <a href={link}>@Wikipedia</a>}
+                        </div>
+                        <div className="content">
+                            {[...Array(stars).keys()].map(() => "⭐️")} {Math.floor(points*10)/10}
+                        </div>
+                    </div>
+                    </div>
+                    </div>
+                    {showTelescope && <Telescope onClose={() => setShowTelescope(false)} goal={object} />}
+                    </>
+            }
+
+            function MoonIcon({lat, lon}) {
+
+                const size = 380
+
+                // convert altitude and azimuth to x and y coordinates
+                
+                const x = 400 + lon / 90 * size
+                const y = 400 - lat / 90 * size
+
+                const color = "#0055ab"
+
+                return <div style={{width: "48px", height: "48px", position: "relative"}}>
+                        <img style={{position: "absolute", left: 0, right:0}} width="48px" height="48px" src="https://www.solarsystemscope.com/spacepedia/images/handbook/renders/moon.png" />
+                        <svg style={{position: "absolute", left: 0, right:0}} width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                            <g>
+                                <ellipse cy={y} cx={x} ry="60" rx="60" stroke="yellow" fill="none" strokeWidth="20" />
+                                
+                            </g>
+                        </svg>   
+                    </div>
+            }
+
+            function LunarCard({object}) {
+
+                const {name, img, stars, points, description, magnitude, wiki, phase, lat, lon } = object
+
+                return <div className="block"><div className="card">
+                    <div className="card-image">
+                        <figure className="image is-4by4">
+                        <img src={img || "https://bulma.io/images/placeholders/1280x960.png"} alt="Placeholder image" />
+                        </figure>
+                    </div>
+                    <div className="card-content">
+                        <div className="media">
+                        <div className="media-left">
+                            <figure className="image is-48x48">
+                            <MoonIcon lat={lat} lon={lon} />
+                            </figure>
+                        </div>
+                        <div className="media-content">
+                            <p className="title is-4">{name}</p>
+                            <p className="subtitle is-7">🌘 {phase}</p>
+                        </div>
+                        </div>
+
+                        <div className="content">
+                        { description } {!!wiki && <a href={wiki}>@Wikipedia</a>}
+                        </div>
+                        <div className="content">
+                            {[...Array(stars).keys()].map(() => "⭐️")} {Math.floor(points*10)/10}
+                        </div>
+                    </div>
+                    </div>
+                    </div>
+                }
+
+            function MapIcon({altaz, onClick}) {
+
+                const size = 380
+
+                // convert altitude and azimuth to x and y coordinates
+                const {alt, az} = altaz
+                const x = 400 - size * Math.sin(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
+                const y = 400 - size * Math.cos(az * Math.PI / 180) * Math.cos(alt * Math.PI / 180)
+
+                const color = "#0055ab"
+
+                return <svg onClick={onClick} width="48" height="48" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+                    <g>
+                        <ellipse cy="400" cx="400" ry="380" rx="380" stroke={color} fill="#061329" strokeWidth="10"/>
+                        <ellipse cy="400" cx="400" ry="200" rx="200" stroke={color} fill="none" strokeWidth="7" />
+                        
+                        <line y2="400" x2="780" y1="400" x1="20" stroke={color} fill="none" strokeWidth="10" />
+                        <line y2="120" x2="120" y1="680" x1="680" stroke={color} fill="none" strokeWidth="3" />
+                        <line y2="780" x2="400" y1="20" x1="400" stroke={color} fill="none" strokeWidth="10" />
+                        <line y2="680" x2="120" y1="120" x1="680" stroke={color} fill="none" strokeWidth="3" />
+
+                        <ellipse cy={y} cx={x} ry="30" rx="30" stroke="yellow" fill="yellow" />
+                        
+                    </g>
+                </svg>
+            }
+
+            function SectorSelector({sector, sectorChange}) {
+                
+                const color = "#0055ab"
+
+                const sectors = [null, "NE", "SE", "SW", "NW"]
+
+                const next = () => {
+                    const index = sectors.indexOf(sector)
+                    const nextSector = sectors[(index + 1) % sectors.length]
+                    sectorChange(nextSector)
+                }
+
+                return <svg width="20" height="20" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" onClick={() => next()}>
+                    {(sector === "SE" || !sector) && <g>
+                        <path fill="#061329" stroke={color} strokeWidth="10" d="m 400 400 l 380 0 a 380 380 0 0 1 -380 380 l 0 -380" />
+                        <path fill="none" stroke={color} strokeWidth="7" d="m 400 400 l 200 0 a 200 200 0 0 1 -200 200" />
+                        <line y2="400" x2="400" y1="680" x1="680" stroke={color} fill="none" strokeWidth="3" />
+                    </g>}
+                    {(sector === "SW" || !sector) && <g>
+                        <path fill="#061329" stroke={color} strokeWidth="10" d="m 400 400 l -380 0 a 380 380 0 0 0 380 380 l 0 -380" />
+                        <path fill="none" stroke={color} strokeWidth="7" d="m 400 400 l -200 0 a 200 200 0 0 0 200 200" />
+                        <line y2="400" x2="400" y1="680" x1="120" stroke={color} fill="none" strokeWidth="3" />
+                    </g>}
+                    {(sector === "NW" || !sector) && <g>
+                        <path fill="#061329" stroke={color} strokeWidth="10" d="m 400 400 l -380 0 a 380 380 0 0 1 380 -380 l 0 380" />
+                        <path fill="none" stroke={color} strokeWidth="7" d="m 400 400 l -200 0 a 200 200 0 0 1 200 -200" />
+                        <line y2="400" x2="400" y1="120" x1="120" stroke={color} fill="none" strokeWidth="3" />
+                    </g>}
+                    {(sector === "NE" || !sector) && <g>
+                        <path fill="#061329" stroke={color} strokeWidth="10" d="m 400 400 l 380 0 a 380 380 0 0 0 -380 -380 l 0 380" />
+                        <path fill="none" stroke={color} strokeWidth="7" d="m 400 400 l 200 0 a 200 200 0 0 0 -200 -200" />
+                        <line y2="400" x2="400" y1="120" x1="680" stroke={color} fill="none" strokeWidth="3" />
+                    </g>}
+                </svg>
+            }
+
+            function ObjectFilter({filterChange}) {
+
+                const [filter, setFilter] = React.useState(null)
+
+                const filters = [
+                    {name: null, label: "Recommended"},
+                    {name: "messier", label: "Messier"},
+                    {name: "galaxies", label: "Galaxies"},
+                    {name: "planet", label: "Planets"},
+                    {name: "nebulae", label: "Nebulae"},
+                    {name: "lunar", label: "Lunar"},
+                ]
+
+                const next = () => {
+                    const index = filters.findIndex(f => f.name === filter)
+                    if (index < filters.length-1) {
+                        filterChange(filters[index+1].name)
+                        setFilter(filters[index+1].name)
+                    }
+                    else {
+                        filterChange(filters[0].name)
+                        setFilter(filters[0].name)
+                    }
+                }
+
+                return <button onClick={() => next()} className="is-ghost button is-small">{filters.find(a => a.name === filter).label}</button>
+            }
+
+            function DatePicker({date, dateChange}) {
+
+                const [pickedDate, setPickedDate] = React.useState(date.toISOString().substring(0,10))
+                const [pickedTime, setPickedTime] = React.useState(date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes() + ":00")
+                const [showPicker, setShowPicker] = React.useState(false)
+
+                const set = () => {
+                    setShowPicker(false)
+                    dateChange(new Date(pickedDate + " " + pickedTime + ":00"))
+                }
+
+                return <><span onClick={() => setShowPicker(true)}>{Functions.niceDateForHeader(date)}</span>
+                       {showPicker && <div className="modal is-active">
+                        <div className="modal-background"></div>
+                            <div className="modal-content">
+                                <div className="box">
+                                    <div className="columns is-mobile">
+                                        <div className="column">
+                                            <div className="control">
+                                                <input className="input" type="date" value={pickedDate} onChange={e => setPickedDate(e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div className="column">
+                                            <div className="control">
+                                                <input className="input" type="time" value={pickedTime} onChange={e => setPickedTime(e.target.value)} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button className="button" onClick={() => set()}>Set</button>
+                                </div>
+                            </div>
+                        <button className="modal-close is-large" aria-label="close"></button>
+                        </div> }
+                        </>
+            }
+
+            function getMoonAndSunPhase({ lat, lon, date }) {
+
+                const ephemeris = new Ephemeris.default({
+                    key: ["sun", "moon"],
+                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
+                    latitude: lat, longitude: lon,
+                    calculateShadows: false
+                })
+
+                const sunAlt = Math.round(ephemeris.sun.position.altaz.topocentric.altitude)
+                const moonAlt = Math.round(ephemeris.moon.position.altaz.topocentric.altitude)
+                const moonPhase = Math.round((1 - Math.abs(ephemeris.moon.position.phaseDecimal - 0.5) * 2) * 100)
+                const moonPhaseIcons = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
+                const phaseEight = Math.floor(ephemeris.moon.position.phaseDecimal * 8)
+                const moonPhaseIcon = moonPhaseIcons[phaseEight]
+
+                return {sunAlt, moonAlt, moonPhase, moonPhaseIcon}
+            }
+
+            function MoonAndSunPhase({lat, lon, date, onClick }) {
+                const {sunAlt, moonAlt, moonPhase, moonPhaseIcon} = getMoonAndSunPhase({lat, lon, date})
+                return <span onClick={() => !!onClick && onClick()}>{moonPhaseIcon} {moonPhase}% 👆 {moonAlt}° ☀️ {sunAlt}</span>
+            }
+
+            function SkyList({ date, objects, next, prev, lat, lon, filterChange, sectorChange, sector, dateChange, nightBarClicked }) {
+                return <section className="section">
+                    <div className="container">
+                        <nav className="level is-mobile">
+                            <div className="level-left">
+                                <h1 className="title">
+                                    <DatePicker date={date} dateChange={dateChange} />
+                                </h1>
+                            </div>
+                            <div className="level-right">
+                                {/*<div className="buttons has-addons">
+                                    <button onClick={() => prev && prev()} className="button">◀︎</button>
+                                    <button onClick={() => next && next()} className="button">▶︎</button>
+                                </div>*/}
+                                <button className="button">📷</button>
+                            </div>
+                        </nav>
+                        <div><MoonAndSunPhase lat={lat} lon={lon} date={date} onClick={() => nightBarClicked()} /></div>
+                        <nav className="level is-mobile">
+                            <div className="level-left">
+                                <p className="subtitle">
+                                    {Functions.roundBy(lat, 3)}° {Functions.roundBy(lon, 3)}°
+                                </p>
+                            </div>
+                            <div className="level-right">
+                                <SectorSelector sector={sector} sectorChange={sectorChange} /> <ObjectFilter filterChange={filterChange}/>
+                            </div>
+                        </nav>
+                        {objects.map((obj) => obj.type === "lunar" ? <LunarCard key={obj.name} object={obj} />: <Card key={obj.name} object={obj} />)}
+                        </div>
+                </section>
+            }
+
+            const calculatePoints = (objects, moon) => {
+
+                const getPoints = (object) => {
+                    const {magnitude, stars, altaz} = object
+                    const {alt, az} = altaz
+                    
+                    const cofficientAlt = 0.3
+                    const cofficientMagnitude = 0.2
+                    const cofficientStars = 0.5
+
+                    const altitudePoints = alt / 90 * cofficientAlt
+                    const magnitudePoints = (8.5 - (magnitude < 0 ? 0 : magnitude)) / 8.5 * cofficientMagnitude
+                    const starsPoints = (stars | 0) / 3 * cofficientStars
+
+                    const decimal = altitudePoints + magnitudePoints + starsPoints
+                    
+                    return decimal * 10
+                }
+
+                const getLunarPoints = (object) => {
+                    const {phase, alt} = moon
+
+                    const cofficientAlt = 0.3
+                    const cofficientShadow = 0.7
+
+                    const shadowPosition = phase > 0.5 ? 1 - (phase - 0.5) * 2 : 1 - phase * 2
+                    const diff = Math.abs(object.phase - shadowPosition)
+                    const shadowDiffPoints = diff > 0.2 ? 0 : (0.2 - diff) / 0.2 * cofficientShadow
+                    const altitudePoints = alt / 90 * cofficientAlt
+
+                    return (shadowDiffPoints + altitudePoints) * 10
+                }
+
+                return objects.map( a => ({...a, points: a.type === "lunar" ? getLunarPoints(a) : getPoints(a)}) )
+            }
+
+            const filterObjectsTooLow = (objects, limitAltitudeDegrees) => {
+                return objects.filter( (a) => !a.altaz || a.altaz.alt > limitAltitudeDegrees )
+            }
+
+            const filterObjectsTooDim = (objects, limitMagnitude) => {
+                return objects.filter( (a) => !a.magnitude || a.magnitude < limitMagnitude )
+            }
+
+            const filterObjectsWithFilter = (objects, filter) => {
+                if (!filter) return objects
+
+                if (filter === "galaxies") {
+                    return objects.filter( (a) => ["SG", "EG", "IR", "IG"].includes(a.messiertype) )
+                }
+
+                if (filter === "nebulae") return objects.filter( (a) => ["DN", "PN"].includes(a.messiertype) )
+
+                return objects.filter( (a) => a.type === filter )
+            }
+
+            const filterObjectsWithSector = (objects, sector) => {
+                if (!sector) return objects
+                const sectors = {
+                    NE: {min: 270, max: 360},
+                    SE: {min: 180, max: 270},
+                    SW: {min: 90, max: 180},
+                    NW: {min: 0, max: 90},
+                }
+                return objects.filter( a => a.altaz.az > sectors[sector].min && a.altaz.az < sectors[sector].max )
+            }
+
+            const fillMessierData = ({objects, lat, lon, date}) => {
+
+                const obs = {
+                    "name": "Helsinki",
+                    "year": date.getFullYear(),
+                    "month": date.getMonth() + 1,
+                    "day": date.getDate(),
+                    "hours": date.getHours(),
+                    "minutes": date.getMinutes(),
+                    "seconds": date.getSeconds(),
+                    "tz": date.getTimezoneOffset(),
+                    "latitude": lat,
+                    "longitude": -1 * lon,
+                }
+
+                return objects.map((obj) => {
+                    const altaz = RadToAA(obj.ra, obj.dec, obs)
+                    const radec = {ra: Functions.parsecol(obj.ra), dec: Functions.parsecol(obj.dec)}
+                    //const img = images[obj.name]
+                    const typeMap = {OC: "openclusters", GC: "globularclusters", dbl: "stars", SG: "galaxies", EG: "galaxies", IR: "galaxies", IG: "galaxies", PN: "planetarynebulae", DN: "diffusenebulae"}
+                    const astroPixelType = obj.name === "M1" ? "supernovae" : typeMap[obj.messiertype]
+                    const img = obj.img || "//wsrv.nl/?url=astropixels.com/" + astroPixelType + "/images/" + obj.name + "-01z.jpg"
+                    
+                    const wikiLink = `https://en.wikipedia.org/wiki/Messier_${obj.name.substring(1)}`
+                    const stellariumLink = `https://stellarium-web.org/skysource/${obj.name}?fov=120.00&date=${date.toISOString()}&lat=${lat}&lng=${lon}&elev=0`
+                    const description = <>{obj.description} <a href={wikiLink}>@wikipedia</a> <a href={stellariumLink}>@stellarium</a></>
+                    
+                    return {...obj, altaz, radec, img, description}
+                })
+            }
+
+            const getMoonPhaseAndAltitude = (lat, lon, date) => {
+                const ephemeris = new Ephemeris.default({
+                    key: ["moon"],
+                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
+                    latitude: lat, longitude: lon,
+                    calculateShadows: false
+                })
+                
+                return {
+                    phase: ephemeris.moon.position.phaseDecimal, 
+                    alt: ephemeris.moon.position.altaz.topocentric.altitude,
+                }
+            }
+
+            const fillPlanetData = ({objects, lat, lon, date}) => {
+
+                const ephemeris = new Ephemeris.default({
+                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
+                    latitude: lat, longitude: lon,
+                    calculateShadows: false
+                })
+
+                console.log(ephemeris)
+
+                return objects.map( planet => {
+                    const ephemeri = ephemeris[planet.name.toLowerCase()]
+                    const alt = ephemeri.position.altaz.topocentric.altitude
+                    const az = ephemeri.position.altaz.topocentric.azimuth
+                    const altaz = {alt, az}
+                    const decObj = ephemeri.position.altaz.topocentric.dDec // as hours, minutes, seconds
+                    const raObj = ephemeri.position.altaz.topocentric.dRA
+                    const dec = decObj.degree + decObj.minutes/60 + decObj.seconds/3600
+                    const ra = raObj.hours + raObj.minutes/60 + raObj.seconds/3600
+                    const radec = {ra, dec}
+                    const link = "https://en.wikipedia.org/wiki/" + planet.name
+                    const stellariumLink = `https://stellarium-web.org/skysource/${planet.name}?fov=120.00&date=${date.toISOString()}&lat=${lat}&lng=${lon}&elev=0`
+                    const description = <>{planet.description} <a href={link}>@wikipedia</a> <a href={stellariumLink}>@stellarium</a></>
+                    return {...planet, altaz, radec, magnitude: ephemeri.magnitude | 0, description}
+                })
+            }
+
+            const fillLunarData = ({objects, lat, lon, date}) => {
+
+                const ephemeris = new Ephemeris.default({
+                    key: ["moon"],
+                    year: date.getFullYear(), month: date.getMonth(), day: date.getDate(), hours: date.getHours() + date.getTimezoneOffset()/60, minutes: date.getMinutes(),
+                    latitude: lat, longitude: lon,
+                    calculateShadows: false
+                })
+
+                return objects.map( object => {
+                    const ephemeri = ephemeris["moon"]
+                    const alt = ephemeri.position.altaz.topocentric.altitude
+                    const az = ephemeri.position.altaz.topocentric.azimuth
+                    const altaz = {alt, az}
+                    
+                    // convert moon latitude and longitude to crecent phase where shadows hit the moon
+                    const phase = Math.round((object.lon + 90) / 180 * 100) / 100
+                    return {...object, altaz, phase}
+                })
+            }
+
+            function DayInCalendar({lat, lon, date}) {
+
+                const {sunAlt, moonAlt, moonPhase, moonPhaseIcon} = getMoonAndSunPhase({lat, lon, date})
+
+                return <div className="is-flex is-flex-direction-column is-align-items-center">
+                    <p>{date.getDate()}</p>
+                    <p style={{fontSize: "0.8em"}}>{moonPhaseIcon} {moonPhase}%</p>
+                    <p style={{fontSize: "0.8em"}}>🌙 {moonAlt}°</p>
+                    <p style={{fontSize: "0.8em"}}>☀️ {sunAlt}°</p>
+                </div>
+            }
+
+            function createReactTableOfTheMonth({month, lat, lon, date}) {
+                const rows = []
+                for (let i = 0; i < 6; i++) {
+                    const row = []
+                    for (let j = 0; j < 7; j++) {
+                        const firstDayOfMonth = new Date(month.year, month.month, 1)
+                        const howManyDaysInMonth = new Date(month.year, month.month + 1, 0).getDate()
+                        const day = i * 7 + j - firstDayOfMonth.getDay()
+                        const isRealDay = day > 0 && day <= howManyDaysInMonth
+                        const className = day < 1 || day > howManyDaysInMonth ? "disabled" : ""
+                        const dayDate = new Date(date)
+                        dayDate.setMonth(month.month)
+                        dayDate.setDate(day)
+                        row.push(<td key={j} className="p-0">{isRealDay && <DayInCalendar lat={lat} lon={lon} date={dayDate} />}</td>)
+                    }
+                    rows.push(<tr key={i}>{row}</tr>)
+                }
+                return <table className="table" style={{width: "100%"}}>
+                    <thead>
+                    <tr>
+                    <th>Ma</th><th>Ti</th><th>Ke</th><th>To</th><th>Pe</th><th>La</th><th>Su</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {rows}
+                    </tbody>
+                    </table>
+                }
+
+            function NightCalendar({lat, lon, date}) {
+                return <>
+                {createReactTableOfTheMonth({lat: lat, lon: lon, date: date, month: {year: (new Date()).getYear(), month: (new Date()).getMonth()}})}
+                {createReactTableOfTheMonth({lat: lat, lon: lon, date: date, month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 1}})}
+                {createReactTableOfTheMonth({lat: lat, lon: lon, date: date, month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 2}})}
+                {createReactTableOfTheMonth({lat: lat, lon: lon, date: date, month: {year: (new Date()).getYear(), month: (new Date()).getMonth() + 3}})}
+                </>
+            }
+
+            function Camera() {
+
+                const [image, setImage] = React.useState(null)
+                const [loading, setLoading] = React.useState(false)
+
+                const sleep = () => new Promise(resolve => setTimeout(resolve, 5000))
+
+                const takePhoto = async () => {
+                    setLoading(true)
+                    setImage(null)
+                    try {
+                        const response = await fetch(`${telescopeUrl}/GPhoto CCD.CCD_EXPOSURE.CCD_EXPOSURE_VALUE/0.0001`, {method: "POST"})
+                        console.log(await response.text())
+                    }
+                    catch (e) {
+                        console.log(e)
+                    }
+                    await sleep()
+                    
+                    setImage("newest")
+                    setLoading(false)
+                }
+
+                return <div className="modal is-active">
+                    <div className="modal-background"></div>
+                        <div className="modal-content">
+                            <div className="is-flex is-flex-direction-column is-align-items-center">
+                                {image && <figure className="image is-4by4">
+                                    <img src={telescopeUrl + "/image/" + image} />
+                                </figure>}
+                                <button className={`button is-primary mt-6 ${loading && "is-loading"}`} onClick={() => takePhoto()}>Take photo</button>
+                            </div>
+                        </div>
+                    <button className="modal-close is-large" aria-label="close"></button>
+                </div>
+            }
+
+            function Main() {
+
+                const lat = 60.812171
+                const lon = 25.127962
+
+                const [filter, setFilter] = React.useState(null)
+                const [sector, setSector] = React.useState(null)
+                const [date, setDate] = React.useState(Functions.getAutoTime(new Date(), lat, lon))
+                const [showCalendar, setShowCalendar] = React.useState(false)
+                const [showCamera, setShowCamera] = React.useState(false)
+
+                const skyObjects = getSkyObjects()
+
+                let objects = [].concat(
+                    fillMessierData({objects: skyObjects.messier, lat: lat, lon: lon, date: date}), 
+                    fillMessierData({objects: skyObjects.others, lat: lat, lon: lon, date: date}), 
+                    fillPlanetData({objects: skyObjects.planets, lat: lat, lon: lon, date: date}),
+                    fillLunarData({objects: skyObjects.lunarTargets, lat: lat, lon: lon, date: date}),
+                )
+                
+
+                objects = calculatePoints(objects, getMoonPhaseAndAltitude(lat, lon, date))
+                objects = filterObjectsWithFilter(objects, filter)
+                objects = filterObjectsWithSector(objects, sector)
+                
+                if (!filter) {
+                    objects = filterObjectsTooLow(objects, 10)
+                    objects = filterObjectsTooDim(objects, 8.5)
+                }
+
+                const orderObjects = objects.sort((a, b) => b.points - a.points)
+
+                return <>{ showCalendar ? 
+                        <NightCalendar lat={lat} lon={lon} date={date} /> :
+                        <><SkyList 
+                            date={date} 
+                            objects={orderObjects.slice(0, 30)} 
+                            prev={() => setDate(new Date(date.setDate(date.getDate() - 1)))} 
+                            next={() => setDate(new Date(date.setDate(date.getDate() + 1)))}
+                            lat={lat} lon={lon} 
+                            filterChange={(filter) => setFilter(filter)}
+                            sector={sector}
+                            sectorChange={(sector) => setSector(sector)}
+                            dateChange={(date) => setDate(date)}
+                            nightBarClicked={() => setShowCalendar(true)}
+                        />
+                        {showCamera && <Camera />}
+                        </>
+                }</>
+            }
+
+            ReactDOM.render(
+                <Main />,
+                document.getElementById('root')
+            );
+
+        </script>
+    </body>
+
+</html>
