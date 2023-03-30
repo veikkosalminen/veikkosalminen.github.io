@@ -43,7 +43,7 @@ const executeCommand = (command) => {
 }
 
 const getNewestImage = () => {
-        var files = fs.readdirSync(dir);
+        var files = fs.readdirSync(path.join(dir, "../.."));
         let max = 0
         let filename = null
         for (let file of files) {
