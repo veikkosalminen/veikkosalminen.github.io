@@ -64,6 +64,8 @@ const serveImage = (res, filename) => {
     if (filename === "newest") filename = getNewestImage();
 
     var file = path.join(dir, filename);
+    
+    console.log("serving", file)
 
     var type = mime[path.extname(file).slice(1)] || 'text/plain';
     
