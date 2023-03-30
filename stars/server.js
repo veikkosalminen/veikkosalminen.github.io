@@ -90,10 +90,8 @@ const requestListener = async (req, res) => {
         return res.end()
     }
 
-    
-    if (req.method === "GET" && req.url === "index") return res.end(getIndexHTML())
-
     const splitted = req.url.split("/")
+    if (req.method === "GET" && splitted[1] === "index.html") return res.end(getIndexHTML())
 
     if (splitted[1] === "image") return serveImage(res, splitted[2])
    
