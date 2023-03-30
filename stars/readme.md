@@ -8,6 +8,11 @@ curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trust
 ngrok config add-authtoken 6JaJw6u64DHWykJTpiXLn_2VLaGCvGq89KLebBskjMe
 ```
 
+ - install node
+```
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+```
+
  - run everything
 ```
 ./run
