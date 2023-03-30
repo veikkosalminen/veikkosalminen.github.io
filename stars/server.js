@@ -96,6 +96,7 @@ const requestListener = async (req, res) => {
     if (req.method === "GET" && splitted[1] === "index.html") return res.end(getIndexHTML())
 
     if (splitted[1] === "image") return serveImage(res, splitted[2])
+    if (splitted[1] === "favicon") return res.end()
    
     res.writeHead(200);
     console.log(splitted)
