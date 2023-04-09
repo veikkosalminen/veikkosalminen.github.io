@@ -1205,7 +1205,7 @@ function getSkyObjects() {
     ],
 
     others: [
-        { name:"Albireo", stars: 3, type:"duoblestar", ra: "19:30:43",
+        { name:"Albireo", stars: 3, type:"others", ra: "19:30:43",
             dec: "+27:57:34",
             "magnitude": "5.11",description:"Duoble Star", img: "https://upload.wikimedia.org/wikipedia/commons/f/f5/NewAlbireo.jpg" }
     ],
