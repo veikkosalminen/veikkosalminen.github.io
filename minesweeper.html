@@ -238,7 +238,7 @@
                 const angle = getAngle(startPosition.lat, startPosition.lon, position.lat, position.lon)
                 console.log(distance, angle)
 
-                const normalPosition = getCoordinates(distance, angle, 20 * 5, 20 * 5, 0.01)
+                const normalPosition = getCoordinates(distance, angle, 20 * 5, 20 * 5, 0.1)
 
                 console.log("pos", normalPosition)
 
