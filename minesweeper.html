@@ -227,8 +227,8 @@
 
                 React.useEffect(() => {
                     navigator.geolocation.watchPosition((position) => {
-                        console.log("position changed")
-                        setPosition({lat: position.coords.latitude, lon: position.coords.longitude})
+                        console.log("position changed", position)
+                        setPosition({lat: position.coords.latitude, lon: position.coords.longitude, accuracy: position.coords.accuracy})
                     })
                 }, [])
 
@@ -248,7 +248,7 @@
                 console.log("pos", normalPosition)
 
                 if (startPosition) return <>
-                    <span>{distance}m {angle}</span>
+                    <span>{Math.round(distance*10)/10}m {Math.round(angle)} {position.accuracy}</span>
                     <Game position={normalPosition}/>
                     </>
                 else return <button className="button" onClick={() => start()}>Start</button>
