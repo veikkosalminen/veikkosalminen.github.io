@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Hello!</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+        <!-- Don't use this in production: -->
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="text/babel">
+
+            function getCoordinates(distance, angle, originX, originY, scale) {
+                // Convert angle to radians
+                const radianAngle = (angle * Math.PI) / 180;
+
+                // Calculate x and y coordinates
+                const x = distance * Math.cos(radianAngle);
+                const y = distance * Math.sin(radianAngle);
+
+                // Return coordinates as an object
+                return { x: originX + x * scale, y: originY + y * scale};
+            }
+
+            function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+                const earthRadius = 6371000; // in meters
+                const dLat = deg2rad(lat2 - lat1);
+                const dLon = deg2rad(lon2 - lon1);
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                const distance = earthRadius * c;
+                return distance;
+            }
+
+            function getAngle(lat1, lon1, lat2, lon2) {
+                const R = 6371; // Earth's radius in km
+                const dLat = deg2rad(lat2 - lat1);
+                const dLon = deg2rad(lon2 - lon1);
+                const a =
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(deg2rad(lat1)) *
+                    Math.cos(deg2rad(lat2)) *
+                    Math.sin(dLon / 2) *
+                    Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                const angle = rad2deg(c);
+                return angle;
+            }
+
+            function rad2deg(rad) {
+                return rad * (180 / Math.PI);
+            }
+
+            function deg2rad(deg) {
+                return deg * (Math.PI / 180)
+            }
+
+            function getBoardState() {
+                const board = []
+
+                const calcMines = (x, y, mines) => mines.filter(a => Math.abs(a[0] - x) <= 1 && Math.abs(a[1] - y) <= 1).length
+
+                const mines = []
+                let done = false
+                while (!done) {
+                    const newMine = [Math.floor(Math.random() * 10), Math.floor(Math.random() * 10)]
+                    const cellAlreadyHasMine = mines.find(a => a[0] === newMine[0] && a[1] === newMine[1])
+                    if (cellAlreadyHasMine) continue
+                    mines.push(newMine)
+                    if (mines.length >= 10) done = true
+                }
+
+                for (let x = 0; x < 10; x++) {
+                    board.push([])
+                    for (let y = 0; y < 10; y++) {
+                        board[x].push({unopened: true, mine: mines.find(a => a[0] === x && a[1] === y), number: calcMines(x, y, mines)})
+                    }
+                }
+                return board
+            }
+
+            function BoardBase() {
+                const elements = []
+                
+                for (let x = 0; x < 10; x++) {
+                    for (let y = 0; y < 10; y++) {
+                        elements.push(<rect x={x * 20} y={y * 20} width="20" height="20" fill="#ccc" stroke="#888" strokeWidth="1"/>)
+                    }
+                }
+                
+                return elements
+            }
+
+            function Unopened({x, y, flag}) {
+                return <>
+                    <path d={`m ${x * 20} ${y * 20} h 20 l -2 2 h -16 v 16 l -2 2`} stroke="none" fill="#fff" strokeWidth="1"/>
+                    <path d={`m ${x * 20 + 20} ${y * 20} l -2 2 v 16 h -16 l -2 2 h 20`} stroke="none" fill="#000" strokeWidth="1"/>
+                    {flag && <path d={`m ${x * 20 + 9} ${y * 20 + 15} v -8 h -5 l 7 -5 v 13`} stroke="none" fill="red" strokeWidth="1"/>}
+                </>
+            }
+
+            function Mine({x, y}) {
+                return <text x={10 + x * 20} y={15 + y * 20} font-size="14" text-anchor="middle">💥</text>
+                return <path d={`m ${x * 20 + 4} ${y * 20 + 10} a 1 1 0 0 0 12 0 a -1 -1 0 0 0 -12 0 h -2 h 16 m -8 0 v -8 v 16 m -5 -13 l 10 10 m 0 -10 l -10 10`} stroke="#000" fill="#888" strokeWidth="1"/>
+            }
+
+            function Number({x, y, number}) {
+                const colors = ["", "blue", "green", "red", "purple", "brown", "cyan", "black", "gray"]
+                const color = colors[number]
+                return <text x={10 + x * 20} y={15 + y * 20} font-size="14" fill={color} text-anchor="middle">{number}</text>
+            }
+
+            function openZeros(board, x, y) {
+                const cellsToOpen = [[x, y]]
+                while (cellsToOpen.length > 0) {
+                    const [x, y] = cellsToOpen.pop()
+                    const cell = board[x][y]
+                    if (!cell.unopened) continue
+                    cell.unopened = false
+                    if (cell.number === 0) {
+                        if (x > 0) cellsToOpen.push([x - 1, y])
+                        if (x < 9) cellsToOpen.push([x + 1, y])
+                        if (y > 0) cellsToOpen.push([x, y - 1])
+                        if (y < 9) cellsToOpen.push([x, y + 1])
+                    }
+                }
+            }
+
+            function Board({cellSize, click, board}) {
+
+                const svgRef = React.useRef()
+
+                const handleSvgClick = (event) => {
+                    var dim = svgRef.current.getBoundingClientRect()
+                    const x = Math.floor((event.clientX - dim.left) / cellSize);
+                    const y = Math.floor((event.clientY - dim.top) / cellSize);
+
+                    click(x, y)
+                }
+
+                const elements = []
+                for (let x = 0; x < 10; x++) {
+                    for (let y = 0; y < 10; y++) {
+                        const {unopened, flag, number, mine} = board[x][y]
+                        if (unopened) {
+                            elements.push(<Unopened x={x} y={y} flag={flag}/>)
+                        } else if (mine) {
+                            elements.push(<Mine x={x} y={y}/>)
+                        } else if (number > 0) {
+                            elements.push(<Number x={x} y={y} number={number}/>)
+                        }
+                        
+
+                    }
+                }
+
+                return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width={cellSize * 10} height={cellSize * 10} ref={svgRef} onClick={handleSvgClick}>
+                        <BoardBase />
+                        {elements}
+                    </svg>
+            }
+
+            function Players({cellSize, position, click, image}) {
+
+                const handleSvgClick = (event) => {
+                    click(Math.floor(position.x / cellSize), Math.floor(position.y / cellSize))
+                }
+
+                return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width={cellSize * 10} height={cellSize * 10} onClick={handleSvgClick}>
+                        
+                        <text x={position.x} y={position.y} font-size="14" text-anchor="middle">{image}</text>
+                       
+                    </svg>
+            }
+
+            function Game({position}) {
+
+                const [board, setBoard] = React.useState(getBoardState())
+
+
+                const handleClick = (x, y) => {
+                    const cell = board[x][y]
+                    if (!cell.mine && cell.number === 0) openZeros(board, x, y)
+                    board[x][y].unopened = false
+                    
+                    setBoard([...board])
+                }
+
+                return <section class="hero is-fullheight">
+                    <div class="hero-body">
+                        <div class="container">
+                        <div class="columns is-centered">
+                            <div class="column is-two-thirds-tablet is-half-desktop is-one-third-widescreen">
+                                <div class="game-board" style={{position: "relative"}}>
+                                    
+                                    <div style={{position: "absolute", top: 0, left: 0}}>
+                                        <Board cellSize={30} board={board} />
+                                    </div>
+                                    <div style={{position: "absolute", top: 0, left: 0}}>
+                                        <Players position={{x: 20, y: 30}} cellSize={30} image="👧🏼"/>
+                                    </div>
+                                    <div style={{position: "absolute", top: 0, left: 0}}>
+                                        <Players position={position} cellSize={30} click={(x,y) => handleClick(x, y)} image="👨🏼"/>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </section>
+            }
+
+            function Main() {
+                const [position, setPosition] = React.useState({lat: 0, lon: 0})
+                const [startPosition, setStartPosition] = React.useState(false)
+                navigator.geolocation.watchPosition((position) => {
+                    console.log("position changed")
+                    setPosition({lat: position.coords.latitude, lon: position.coords.longitude})
+                })
+
+                const start = () => {
+                    // calculate meters between two lat lon points
+                    
+                    setStartPosition(position)
+                    console.log("start", position)
+                }
+
+                const distance = getDistanceFromLatLonInMeters(startPosition.lat, startPosition.lon, position.lat, position.lon)
+                const angle = getAngle(startPosition.lat, startPosition.lon, position.lat, position.lon)
+
+                const normalPosition = getCoordinates(distance, angle, 20 * 5, 20 * 5, 0.0001)
+
+                console.log("pos", normalPosition)
+
+                if (startPosition) return <Game position={normalPosition}/>
+                else return <button className="button" onClick={() => start()}>Start</button>
+            }
+
+            ReactDOM.render(
+                <Main />,
+                document.getElementById('root')
+            );
+
+        </script>
+    </body>
+
+</html>
