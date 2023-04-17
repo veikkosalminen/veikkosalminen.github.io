@@ -249,7 +249,7 @@
 
                 return <>
                     <span>{Math.round(distance*10)/10}m {Math.round(angle)} {position.accuracy}</span>
-                    {startPoistion ? <Game position={normalPosition}/> : <button className="button" onClick={() => start()}>Start</button>}
+                    {startPosition ? <Game position={normalPosition}/> : <button className="button" onClick={() => start()}>Start</button>}
                     </>
             }
 
