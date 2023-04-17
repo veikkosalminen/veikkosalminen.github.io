@@ -18,15 +18,8 @@
         <script type="text/babel">
 
             function getCoordinates(distance, angle, originX, originY, scale) {
-                // Convert angle to radians
-                const radianAngle = (angle * Math.PI) / 180;
-
-                // Calculate x and y coordinates
-                const x = distance * Math.cos(radianAngle);
-                const y = distance * Math.sin(radianAngle);
-
-                // Return coordinates as an object
-                return { x: originX + x * scale, y: originY + y * scale};
+                var rad = angle * Math.pi / 180;
+                return {x: originX + Math.cos(rad) * distance * scale, y: originY + Math.sin(rad) * distance * scale}
             }
 
             function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
