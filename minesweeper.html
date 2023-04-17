@@ -42,18 +42,19 @@
             }
 
             function getAngle(lat1, lon1, lat2, lon2) {
-                const R = 6371; // Earth's radius in km
-                const dLat = deg2rad(lat2 - lat1);
-                const dLon = deg2rad(lon2 - lon1);
-                const a =
-                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(deg2rad(lat1)) *
-                    Math.cos(deg2rad(lat2)) *
-                    Math.sin(dLon / 2) *
-                    Math.sin(dLon / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                const angle = rad2deg(c);
-                return angle;
+                const dLon = (lon2 - lon1);
+
+                const y = Math.sin(dLon) * Math.cos(lat2);
+                const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1)
+                        * Math.cos(lat2) * Math.cos(dLon);
+
+                let brng = Math.atan2(y, x);
+
+                brng = rad2deg(brng);
+                brng = (brng + 360) % 360;
+                brng = 360 - brng; // count degrees counter-clockwise - remove to make clockwise
+
+                return brng;
             }
 
             function rad2deg(rad) {
@@ -158,8 +159,6 @@
                         } else if (number > 0) {
                             elements.push(<Number x={x} y={y} number={number}/>)
                         }
-                        
-
                     }
                 }
 
@@ -172,7 +171,7 @@
             function Players({cellSize, position, click, image}) {
 
                 const handleSvgClick = (event) => {
-                    click(Math.floor(position.x / cellSize), Math.floor(position.y / cellSize))
+                    click(Math.floor(position.x / 20), Math.floor(position.y / 20))
                 }
 
                 return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width={cellSize * 10} height={cellSize * 10} onClick={handleSvgClick}>
@@ -237,6 +236,7 @@
 
                 const distance = getDistanceFromLatLonInMeters(startPosition.lat, startPosition.lon, position.lat, position.lon)
                 const angle = getAngle(startPosition.lat, startPosition.lon, position.lat, position.lon)
+                console.log(distance, angle)
 
                 const normalPosition = getCoordinates(distance, angle, 20 * 5, 20 * 5, 0.0001)
 
