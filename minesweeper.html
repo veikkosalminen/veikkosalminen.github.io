@@ -242,7 +242,10 @@
 
                 console.log("pos", normalPosition)
 
-                if (startPosition) return <Game position={normalPosition}/>
+                if (startPosition) return <>
+                    <span>{distance}m {angle}</span>
+                    <Game position={normalPosition}/>
+                    </>
                 else return <button className="button" onClick={() => start()}>Start</button>
             }
 
