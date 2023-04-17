@@ -229,7 +229,7 @@
                     navigator.geolocation.watchPosition((position) => {
                         console.log("position changed", position)
                         setPosition({lat: position.coords.latitude, lon: position.coords.longitude, accuracy: position.coords.accuracy})
-                    })
+                    }, { enableHighAccuracy: true })
                 }, [])
 
                 const start = () => {
