@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Rally 🚗</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+        <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+        <!-- Don't use this in production: -->
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+        <script type="module">
+            // Import the functions you need from the SDKs you need
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+            import { getDatabase, set, ref, onValue } from 'https://www.gstatic.com/firebasejs/9.17.1/firebase-database.js'
+            // TODO: Add SDKs for Firebase products that you want to use
+            // https://firebase.google.com/docs/web/setup#available-libraries
+          
+            // Your web app's Firebase configuration
+            const firebaseConfig = {
+              apiKey: "AIzaSyB0TyJJgeLf0aorEFg1UwYGon01-a-suic",
+              authDomain: "perfect-stock-193712.firebaseapp.com",
+              databaseURL: "https://perfect-stock-193712.firebaseio.com",
+              projectId: "perfect-stock-193712",
+              storageBucket: "perfect-stock-193712.appspot.com",
+              messagingSenderId: "436454389671",
+              appId: "1:436454389671:web:dd14398e8280bd8b58e882"
+            };
+          
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+
+            window.firebase = {getDatabase, app, set, ref, onValue}
+
+          </script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="text/babel">
+
+            const database = window.firebase.getDatabase(window.firebase.app);
+
+            const trackData = {
+                countries: [
+                    {
+                        id: 1,
+                        name: "Wales 🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+                        stages: [
+                            {id: 1, name: "1️⃣"},
+                        ]
+                    },
+                    {
+                        id: 2,
+                        name: "Puola 🇵🇱",
+                        stages: [
+                            {id: 5, name: "1️⃣"},
+                        ]
+                    },
+                    {
+                        id: 3,
+                        name: "Monte Carlo 🇲🇨",
+                        stages: [
+                            {id: 9, name: "1️⃣"},
+
+                        ]
+                    },
+                    {
+                        id: 4,
+                        name: "Suomi 🇫🇮",
+                        stages: [
+                            {id: 13, name: "1️⃣"},
+                           
+                            
+                        ]
+                    },
+                    {
+                        id: 5,
+                        name: "Espanja 🇪🇸",
+                        stages: [
+                            {id: 51, name: "1️⃣"},
+                           
+                        ]
+                    },
+                  
+                ],
+                drivers: [
+                    {id: 1, name: "Viljo 👦🏻"},
+                    {id: 2, name: "Veikko 🧔🏻‍♂️"},
+                ],
+            }
+
+            const getDefaultData = () => {
+                return []
+                const preservedData = localStorage.getItem("data")
+                return preservedData ? JSON.parse(preservedData) : []
+            }
+
+            const preserveData = (data) => {
+                /*localStorage.setItem("data", JSON.stringify(data)) 
+
+                fetch("https://eu-central-1.aws.data.mongodb-api.com/app/rally-qgefr/endpoint/times", {
+                    method: "post",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({times: data})
+                })*/
+
+                window.firebase.set(window.firebase.ref(database, 'rally'), {
+                    times: data,
+                })
+            }
+
+            const getTime = (stage, driver, data) => {
+                const time = data.find((a) => a.driver === driver && a.stage === stage)
+
+                return time ? time.time : null
+            }
+
+            const getTimeSum = (driver, stages, data) => {
+                const times = data.filter((a) => a.driver === driver && stages.includes(a.stage))
+
+                if (times && times.find((a) => a.time === -1)) return -1
+
+                return times ? times.map(a => a.time).reduce((a, b) => a+b, 0) : null
+            }
+
+            const strToMilliseconds = (str) => {
+                const minutes = str.substring(-5, 2)
+            }
+
+            const addDifferencesAndFormat = (times) => {
+
+                let smallestIndex = null
+                for (let index in times) {
+                    if (times[index] > 0 && (!smallestIndex || times[index] < times[smallestIndex])) smallestIndex = index
+                }
+
+                return times.map( (time, index) => {
+                    if (smallestIndex && index != smallestIndex && time > 0) {
+                        const difference = time - times[smallestIndex]
+                        if (!difference) return formatTime(time)
+                        return <>{formatTime(time)} <span className="has-text-danger">{formatDifference(difference)}</span></>
+                    }
+                    return formatTime(time)
+                } )
+            }
+
+            const dataToTables = (data) => {
+
+                const tables = []
+
+                for (let country of trackData.countries) {
+
+                    const headers = ["#"].concat(trackData.drivers.map((driver) => driver.name))
+
+                    const rows = []
+                    for (let stage of country.stages) {
+                        const stageTimes = trackData.drivers.map((driver) => getTime(stage.id, driver.id, data))
+                        rows.push([stage.name].concat(addDifferencesAndFormat(stageTimes)))
+                    }
+
+                    const timeSums = trackData.drivers.map((driver) => getTimeSum(driver.id, country.stages.map(a => a.id), data))
+                    const sums = [""].concat(addDifferencesAndFormat(timeSums))
+
+                    tables.push({id: country.id, header: country.name, headers: headers, rows: rows, sums: sums})
+                }
+
+                return tables
+            }
+
+            const calcPoints = (times) => {
+                let smallestIndex = -1
+                
+                for (let index in times) {
+                    if (times[index] > 0 && (smallestIndex === -1 || times[index] < times[smallestIndex])) smallestIndex = index
+                }
+
+                return times.map( ( time, index ) => {
+                    let points = 0, formatted = ""
+                    if (smallestIndex !== -1 && index == smallestIndex) {
+                        points = 2
+                        formatted = "2 🏆"
+                    }
+                    else if (time === -1) {
+                        points = 0
+                        formatted = "🚫"
+                    }
+                    else if (time > 0) {
+                        points = 1
+                        formatted = "1 🏁"
+                    }
+                    return {time: time, points: points, formatted: formatted}
+                })
+            }
+
+            const getResults = (data) => {
+                const headers = ["#"].concat(trackData.drivers.map((driver) => driver.name))
+
+                const rows = []
+                const pointsCache = []
+
+                for (let country of trackData.countries) {
+                    const timeSums = trackData.drivers.map((driver) => getTimeSum(driver.id, country.stages.map(a => a.id), data))
+                    const points = calcPoints(timeSums)
+ 
+                    pointsCache.push(points)
+
+                    rows.push([country.name].concat(points.map(a => a.formatted)))
+                }
+
+                const sumPoints = pointsCache.reduce( (r, a) => {
+                    a.forEach( (b, i) => {
+                        r[i] = (r[i] || 0) + b.points;
+                    })
+                    return r;
+                }, [])
+
+                const sums = [""].concat(sumPoints)
+
+                return {headers: headers, rows: rows, sums: sums}
+            }
+
+            const getLeader = (sums) => {
+
+                let biggestIndex = -1
+                
+                for (let index in sums) {
+                    if (sums[index] > 0 && (biggestIndex === -1 || sums[index] > sums[biggestIndex])) biggestIndex = index
+                }
+
+                if (biggestIndex === -1) return ""
+
+                return trackData.drivers[biggestIndex - 1].name
+            }
+
+            const formatTime = (milliseconds, leadingZeros = true) => {
+                if (milliseconds === -1) return "🚫"
+                if (!milliseconds) return "--"
+                const fullSeconds = Math.floor(milliseconds/1000)
+                const minutes = Math.floor(fullSeconds / 60)
+
+                const seconds = fullSeconds - minutes * 60
+                const millis = milliseconds - fullSeconds * 1000
+
+                let str = ""
+                if (minutes || leadingZeros) str += minutes + ":"
+                str += (seconds < 10 && (leadingZeros || minutes)) ? "0" : ""
+                str += seconds
+                str += "."
+                if (millis < 100) str += "0"
+                if (millis < 10) str += "0"
+                str += millis
+
+                return str
+            }
+
+            const formatDifference = (differenceInMilliseconds) => {
+                const negative = differenceInMilliseconds < 0
+                const formatted = formatTime(negative ? differenceInMilliseconds * -1 : differenceInMilliseconds, false)
+
+                return (negative ? "-" : "+") + formatted
+            }
+
+            const calculateMillisFromInput = (input) => {
+                const minutes = Math.floor(input/100000)
+                const millis = (input - minutes*100000) + minutes * 60 * 1000 
+                return millis
+            }
+
+            const useData = (def) => {
+
+                const [data, setData] = React.useState(def)
+
+                React.useEffect(async () => {
+                    const countref = window.firebase.ref(database, 'rally');
+                    window.firebase.onValue(countref, (snapshot) => {
+                        const data = snapshot.val();
+                        setData(data ? data.times : [])
+                    });
+                }, [])
+
+                return [data, setData]
+            }
+
+            const _useData = (def) => {
+
+                const [data, setData] = React.useState(def)
+
+                React.useEffect(async () => {
+                    const response = await fetch("https://eu-central-1.aws.data.mongodb-api.com/app/rally-qgefr/endpoint/times", {
+                        method: "post"
+                    })
+
+                    const times = await response.json()
+                    setData(times.times)
+                }, [])
+
+                return [data, setData]
+            }
+
+            function Table({headers, rows, sums, onClick}) {
+                return <table className="table">
+                        <thead>
+                        <tr>
+                            {headers.map((header, index) => <th key={index}>{header}</th>)}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {rows.map((row, rowindex) => {
+                            return <tr key={rowindex}>
+                                {row.map((cell, cellindex) => {
+                                    return <td key={cellindex} onClick={() => onClick && onClick(rowindex, cellindex)}>{cell}</td>
+                                })}
+                            </tr>
+                        })}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                {sums.map((cell, index) => <td key={index}>{cell}</td>)}
+                            </tr>
+                        </tfoot>
+                    </table>
+            }
+
+            function ModalInput({ onClose, onSave }) {
+
+                const [value, setValue] = React.useState("")
+                
+                const saveClicked = () => {
+                    const millis = calculateMillisFromInput(value)
+                    onSave(millis)
+                }
+
+                const onRetire = () => {
+                    onSave(-1)
+                }
+
+                return <div className="modal is-active">
+                    <div className="modal-background"></div>
+
+                    <div className="modal-content">
+                        <div className="box">
+                            <p><input className="input" type="number" placeholder="mss000" value={value} onChange={(e) => setValue(e.target.value)}/></p>
+                            <button className="button is-primary mt-4" onClick={() => saveClicked()}>save</button>
+                            <button className="button is-danger mt-4" onClick={() => onRetire()}>retire</button>
+                            <button className="button mt-4" onClick={() => onClose()}>cancel</button>
+                        </div>
+                    </div>
+                    
+                </div>
+            }
+
+            function Main() {
+
+                const [showModal, setShowModal] = React.useState(null)
+                const [data, setData] = useData(getDefaultData())
+
+                const tables = dataToTables(data)
+                const results = getResults(data)
+
+                const clicked = (table, row, column) => {
+                    const country = trackData.countries.find( a => a.id === table)
+                    const stage = country.stages[row]
+                    const driver = trackData.drivers[column - 1]
+                    setShowModal({country, stage, driver})
+                }
+
+                const saveValue = (value) => {
+                    const oldTime = data.find(a => a.stage === showModal.stage.id && a.driver === showModal.driver.id)
+
+                    if (oldTime) oldTime.time = parseInt(value, 10)
+                    else data.push({stage: showModal.stage.id, driver: showModal.driver.id, time: parseInt(value, 10)})
+                    setShowModal(null)
+                    //setData(JSON.parse(JSON.stringify(data)))
+                    preserveData(data)
+                }
+
+                return <div className="content">
+                    {tables.map((table) => {
+                        return <div key={table.id} className="py-4 px-3">
+                            <h2 className="is-title-2">{table.header}</h2>
+                            <Table headers={table.headers} rows={table.rows} sums={table.sums} onClick={(row, column) => clicked(table.id, row, column)}/>
+                        </div>
+                    })}
+                { showModal && <ModalInput onClose={() => setShowModal(null)} onSave={(value) => saveValue(value)}/> }
+                    
+                    <div className="py-4 px-3">
+                            <hr />
+                            <Table headers={results.headers} rows={results.rows} sums={results.sums} />
+                    </div>    
+                    <div className="py-4 px-3">
+                            <h1 className="is-title-1 has-text-centered">🏆 {getLeader(results.sums)}</h1>
+                    </div>    
+                </div>
+            }
+
+            ReactDOM.render(
+                <Main />,
+                document.getElementById('root')
+            );
+
+        </script>
+    </body>
+
+</html>
