@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Education 🎓</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css"
+    />
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+    <!-- Don't use this in production: -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      // all images created with https://elmah.io/tools/base64-image-encoder/
+
+      const categories = {
+        favorites: [
+          "react",
+          "tailwind",
+          "javascript",
+          "typescript",
+          "mongo",
+          "mysql",
+          "php",
+          "laravel",
+          "docker",
+          "git",
+        ],
+        backend: [
+          "aws",
+          "python",
+          "php",
+          "node",
+          "mongo",
+          "mysql",
+          "redis",
+          "kubernetes",
+          "docker",
+          "linux",
+          "appservices",
+          "rancher",
+          "laravel",
+          "serverless",
+          "C++",
+          "apache",
+        ],
+        database: ["mongo", "mysql", "redis"],
+        frontend: [
+          "react",
+          "javascript",
+          "bootstrap",
+          "bulma",
+          "ember",
+          "android",
+          "ios",
+          "html5",
+          "typescript",
+          "sass",
+          "tailwind",
+          "corber",
+          "pwa",
+          "storybook",
+          "prettier",
+        ],
+        others: [
+          "slack",
+          "github",
+          "actions",
+          "copilot",
+          "pulumi",
+          "git",
+          "travis",
+          "terraform",
+          "vite",
+          "launchdarkly",
+          "google",
+          "storybook",
+          "sentry",
+          "gatewayapi",
+          "crowdin",
+          "npm",
+          "composer",
+          "PlayStore",
+          "jest",
+        ],
+        aws: [
+          "cloudwatch",
+          "s3",
+          "ec2",
+          "rds",
+          "route53",
+          "waf",
+          "ecr",
+          "lambda",
+        ],
+        graveyard: ["walkme", "scalr", "twilio"],
+      };
+
+      function Card({ img, name }) {
+        return (
+          <div className="card">
+            <header className="card-header">
+              <p className="card-header-title">
+                <span class="icon-text is-align-items-center is-flex-wrap-nowrap">
+                  <span class="icon is-medium"></span>
+                  <span className="is-clipped">{name}</span>
+                </span>
+              </p>
+            </header>
+          </div>
+        );
+      }
+
+      function Elements({ keys }) {
+        return (
+          <div className="fixed-grid has-auto-count">
+            <div className="grid">
+              {keys.map((key) => (
+                <div class="cell">
+                  <Card name={key} />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      function Main() {
+        return (
+          <div className="container">
+            <h1 className="title mt-4">Education 🎓</h1>
+            <div class="fixed-grid has-3-cols has-1-cols-mobile">
+              <div className="grid">
+                <div className="cell">
+                  <div class="card">
+                    <div class="card-image">
+                      <figure class="image is-4by3">
+                        <img
+                          src="https://www.aalto.fi/sites/g/files/flghsv161/files/styles/o_914w_ah_n/public/2021-11/A-logo_around_Campus_12-6-2020_photo_Mikko_Raskinen_060.jpg?itok=zSCst_d7"
+                          alt="Placeholder image"
+                        />
+                      </figure>
+                    </div>
+                    <div class="card-content">
+                      <div class="media">
+                        <div class="media-content">
+                          <p class="title is-4">Aalto University</p>
+                          <p class="subtitle is-6">
+                            Master of Science (Technology)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="content">
+                        <ul>
+                          <li>Major: Electronics</li>
+                          <li>Minor: WWW Technologies</li>
+                        </ul>
+
+                        <br />
+                        <time datetime="2016-1-1">2003-2010</time>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="cell">
+                  <div class="card">
+                    <div class="card-image">
+                      <figure class="image is-4by3">
+                        <img
+                          src="https://sndp.mediadelivery.fi/img/468/cb9fa48e580d54a3d336b845b5e196da.jpg"
+                          alt="Placeholder image"
+                        />
+                      </figure>
+                    </div>
+                    <div class="card-content">
+                      <div class="media">
+                        <div class="media-content">
+                          <p class="title is-4">High School of Mänttä</p>
+                          <p class="subtitle is-6">Graduate</p>
+                        </div>
+                      </div>
+
+                      <div class="content">
+                        <ul>
+                          <li>
+                            Advanced mathematics 60/60 <b>L</b>
+                          </li>
+                          <li>
+                            Real (physics) 43/8 <b>L</b>
+                          </li>
+                        </ul>
+                        <br />
+                        <time datetime="2016-1-1">1999-2002</time>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="cell">
+                  <div class="card">
+                    <div class="card-image">
+                      <figure class="image is-4by3">
+                        <img
+                          src="https://sndp.mediadelivery.fi/img/468/707de461-585a-5d9d-a009-ad7c5a2f48f8.jpg"
+                          alt="Placeholder image"
+                        />
+                      </figure>
+                    </div>
+                    <div class="card-content">
+                      <div class="media">
+                        <div class="media-content">
+                          <p class="title is-4">Comprehensive School</p>
+                        </div>
+                      </div>
+
+                      <div class="content">
+                        <br />
+                        <time datetime="2016-1-1">1994-1999</time>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.render(<Main />, document.getElementById("root"));
+    </script>
+  </body>
+</html>
