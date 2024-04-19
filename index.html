@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Coding Skills 🚀</title>
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css"
     />
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
@@ -218,16 +218,20 @@
 
       function Card({ img, name }) {
         return (
-          <div className="card mt-2 mr-2">
+          <div className="card">
             <header className="card-header">
               <p className="card-header-title">
-                <img
-                  width="32px"
-                  height="32px"
-                  className="image is-32x32"
-                  src={img}
-                />
-                <p className="ml-4">{name}</p>
+                <span class="icon-text is-align-items-center">
+                  <span class="icon is-medium">
+                    <img
+                      width="32px"
+                      height="32px"
+                      className="image is-square"
+                      src={img}
+                    />
+                  </span>
+                  <span>{name}</span>
+                </span>
               </p>
             </header>
           </div>
@@ -236,10 +240,14 @@
 
       function Elements({ keys }) {
         return (
-          <div className="is-flex is-flex-wrap-wrap">
-            {keys.map((key) => (
-              <Card img={images[key]} name={key} />
-            ))}
+          <div className="fixed-grid has-auto-count">
+            <div className="grid">
+              {keys.map((key) => (
+                <div class="cell">
+                  <Card img={images[key]} name={key} />
+                </div>
+              ))}
+            </div>
           </div>
         );
       }
@@ -248,35 +256,36 @@
         return (
           <div className="container">
             <h1 className="title mt-4">Coding Skills 🚀</h1>
-            <div className="tile is-ancestor">
-              <div className="tile is-vertical is-12">
-                <div className="tile">
-                  <div className="tile is-parent is-vertical">
-                    <article className="tile is-child notification is-primary">
-                      <p className="title">Favorites 💪</p>
-                      <Elements keys={categories.favorites} />
-                    </article>
-                    <article className="tile is-child notification is-warning">
-                      <p className="title">AWS</p>
-                      <p className="subtitle">these and more...</p>
-                      <Elements keys={categories.aws} />
-                    </article>
-                  </div>
-                  <div className="tile is-parent">
-                    <article className="tile is-child notification is-info">
-                      <p className="title">Backend</p>
-                      <Elements keys={categories.backend} />
-                    </article>
-                  </div>
-                  <div className="tile is-parent">
-                    <article className="tile is-child notification is-success">
-                      <p className="title">Frontend</p>
-                      <Elements keys={categories.frontend} />
-                    </article>
-                  </div>
+            <div class="fixed-grid has-3-cols has-1-cols-mobile">
+              <div className="grid">
+                <div className="cell">
+                  <article className="box has-background-primary">
+                    <p className="title">Favorites 💪</p>
+                    <Elements keys={categories.favorites} />
+                  </article>
                 </div>
-                <div className="tile is-parent">
-                  <article className="tile is-child notification is-danger">
+                <div className="cell">
+                  <article className="box has-background-info">
+                    <p className="title">Backend</p>
+                    <Elements keys={categories.backend} />
+                  </article>
+                </div>
+                <div className="cell">
+                  <article className="box has-background-success">
+                    <p className="title">Frontend</p>
+                    <Elements keys={categories.frontend} />
+                  </article>
+                </div>
+                <div className="cell">
+                  <article className="box has-background-warning">
+                    <p className="title">AWS</p>
+                    <p className="subtitle">these and more...</p>
+                    <Elements keys={categories.aws} />
+                  </article>
+                </div>
+
+                <div className="cell is-col-span-2 is-col-span-1-mobile">
+                  <article className="box has-background-danger">
                     <p className="title">Others</p>
                     <p className="subtitle">these are also needed...</p>
                     <Elements keys={categories.others} />
