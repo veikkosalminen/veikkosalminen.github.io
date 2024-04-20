@@ -254,46 +254,54 @@
 
       function Main() {
         return (
-          <div className="container">
-            <h1 className="title mt-4">Coding Skills 🚀</h1>
-            <div class="fixed-grid has-3-cols has-1-cols-mobile">
-              <div className="grid">
-                <div className="cell">
-                  <article className="box has-background-primary">
-                    <p className="title">Favorites 💪</p>
-                    <Elements keys={categories.favorites} />
-                  </article>
-                </div>
-                <div className="cell">
-                  <article className="box has-background-info">
-                    <p className="title">Backend</p>
-                    <Elements keys={categories.backend} />
-                  </article>
-                </div>
-                <div className="cell">
-                  <article className="box has-background-success">
-                    <p className="title">Frontend</p>
-                    <Elements keys={categories.frontend} />
-                  </article>
-                </div>
-                <div className="cell">
-                  <article className="box has-background-warning">
-                    <p className="title">AWS</p>
-                    <p className="subtitle">these and more...</p>
-                    <Elements keys={categories.aws} />
-                  </article>
-                </div>
+          <section class="section">
+            <div className="container">
+              <h1 className="title mt-4">Coding Skills 🚀</h1>
+              <div class="fixed-grid has-3-cols has-1-cols-mobile">
+                <div className="grid">
+                  <div className="cell">
+                    <article className="box has-background-primary">
+                      <p className="title has-text-primary-invert">
+                        Favorites{" "}
+                      </p>
+                      <Elements keys={categories.favorites} />
+                    </article>
+                  </div>
+                  <div className="cell">
+                    <article className="box has-background-info">
+                      <p className="title has-text-info-invert">Backend</p>
+                      <Elements keys={categories.backend} />
+                    </article>
+                  </div>
+                  <div className="cell">
+                    <article className="box has-background-success">
+                      <p className="title has-text-success-invert">Frontend</p>
+                      <Elements keys={categories.frontend} />
+                    </article>
+                  </div>
+                  <div className="cell">
+                    <article className="box has-background-warning">
+                      <p className="title has-text-warning-invert">AWS</p>
+                      <p className="subtitle has-text-warning-invert">
+                        these and more...
+                      </p>
+                      <Elements keys={categories.aws} />
+                    </article>
+                  </div>
 
-                <div className="cell is-col-span-2 is-col-span-1-mobile">
-                  <article className="box has-background-danger">
-                    <p className="title">Others</p>
-                    <p className="subtitle">these are also needed...</p>
-                    <Elements keys={categories.others} />
-                  </article>
+                  <div className="cell is-col-span-2 is-col-span-1-mobile">
+                    <article className="box has-background-danger">
+                      <p className="title has-text-danger-invert">Others</p>
+                      <p className="subtitle has-text-danger-invert">
+                        these are also needed...
+                      </p>
+                      <Elements keys={categories.others} />
+                    </article>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
         );
       }
 
