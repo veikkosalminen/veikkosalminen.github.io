@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <title>Veikko Salminen</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+    <script
+      src="chrome-extension://gkkcgbepkkhfnnjolcaggogkjodmlpkh/assets/content-main-world.8c44456d.js"
+      type="module"
+    ></script>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://veikkosalminen.github.io/cv/images.js"></script>
+
+    <!-- Don't use this in production: -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body data-aos-easing="ease" data-aos-duration="1000" data-aos-delay="1000">
+    <!-- Hero and Nav -->
+    <section class="hero late-gray-bg is-fullheight custom-font">
+      <div class="hero-body p-0 custom-font">
+        <div
+          class="main-hero"
+          style="
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            text-size-adjust: 100%;
+            color: #4a4a4a;
+            font-size: 1em;
+            font-weight: 400;
+            line-height: 1.5;
+            font-family: 'Nunito', sans-serif;
+            box-sizing: inherit;
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            height: 100%;
+            background-image: url('https://github.com/veikkosalminen/veikkosalminen.github.io/blob/main/field.jpg?raw=true');
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            opacity: 0.6;
+          "
+        ></div>
+        <div class="container has-text-centered">
+          <p
+            data-aos="zoom-out-down"
+            data-aos-duration="1000"
+            data-aos-delay="1000"
+            class="subtitle font-light"
+          >
+            Hello, I'm
+          </p>
+          <h1
+            data-aos="zoom-out"
+            data-aos-duration="1000"
+            data-aos-delay="1000"
+            class="title font-light is-1"
+          >
+            <em> VEIKKO</em>
+          </h1>
+          <p
+            data-aos="zoom-out-up"
+            data-aos-duration="1000"
+            data-aos-delay="1000"
+            class="subtitle font-light"
+          >
+            from Mäntsälä
+          </p>
+        </div>
+      </div>
+    </section>
+    <!-- End Hero and Nav -->
+    <!-- About -->
+
+    <section class="block py-6 custom-font has-background-grey-lighter">
+      <div class="column is-4 mx-auto">
+        <h2 data-aos="fade-out" class="title has-text-centered is-uppercase">
+          About Me
+        </h2>
+        <div
+          class="title-underline"
+          style="
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            text-size-adjust: 100%;
+            color: #4a4a4a;
+            font-size: 1em;
+            font-weight: 400;
+            line-height: 1.5;
+            font-family: 'Nunito', sans-serif;
+            box-sizing: inherit;
+            border-bottom: 10px solid #00d1b2;
+          "
+        ></div>
+      </div>
+      <div class="columns mx-0">
+        <div class="column is-5 m-auto p-6">
+          <div class="content" data-aos="fade-up" class="">
+            <p>
+              Hello, my name is <strong>Veikko Salminen</strong>. I am a
+              software developer with a passion for creating new solutions. I
+              have a strong background in electronics and programming. I have
+              been working with web technologies since 2000. I have a Master of
+              Science (Technology) degree from Aalto University.
+            </p>
+            <p>
+              Most of my free time goes with my kids and family. When I have
+              time and clear skyes I do astrophotography
+              <a href="https://www.instagram.com/astroveikko/"> @astroveikko </a
+              >. I also enjoy programming and learning new things. I am a big
+              fan of React and Typescript. I have experience with Node.js and
+              MongoDB. I have also worked many years with PHP, Laravel, and
+              MySQL.
+            </p>
+          </div>
+        </div>
+        <figure data-aos="fade-down" class="image p-6 m-auto column is-5">
+          <img
+            class="standard-radius"
+            src="https://github.com/veikkosalminen/veikkosalminen.github.io/blob/main/family.jpg?raw=true"
+            alt=""
+          />
+        </figure>
+      </div>
+    </section>
+    <!-- End About -->
+
+    <!-- My Skills -->
+
+    <section class="hero late-gray-bg custom-font">
+      <div class="column is-4 mx-auto pt-6">
+        <h2
+          class="title has-text-centered is-uppercase font-light"
+          data-aos="fade-down"
+        >
+          Coding Skills 🚀
+        </h2>
+        <div
+          class="title-underline"
+          style="
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            text-size-adjust: 100%;
+            color: #4a4a4a;
+            font-size: 1em;
+            font-weight: 400;
+            line-height: 1.5;
+            font-family: 'Nunito', sans-serif;
+            box-sizing: inherit;
+            border-bottom: 10px solid #00d1b2;
+          "
+        ></div>
+      </div>
+      <div class="">
+        <div id="skills" style="width: 100%"></div>
+        <script type="text/babel">
+          const categories = {
+            favorites: [
+              "react",
+              "tailwind",
+              "javascript",
+              "typescript",
+              "mongo",
+              "mysql",
+              "php",
+              "laravel",
+              "docker",
+              "git",
+            ],
+            backend: [
+              "aws",
+              "python",
+              "php",
+              "node",
+              "mongo",
+              "mysql",
+              "redis",
+              "kubernetes",
+              "docker",
+              "linux",
+              "appservices",
+              "rancher",
+              "laravel",
+              "serverless",
+              "C++",
+              "apache",
+            ],
+            database: ["mongo", "mysql", "redis"],
+            frontend: [
+              "react",
+              "javascript",
+              "bootstrap",
+              "bulma",
+              "ember",
+              "android",
+              "ios",
+              "html5",
+              "typescript",
+              "sass",
+              "tailwind",
+              "corber",
+              "pwa",
+              "storybook",
+              "prettier",
+            ],
+            others: [
+              "slack",
+              "github",
+              "actions",
+              "copilot",
+              "pulumi",
+              "git",
+              "travis",
+              "terraform",
+              "vite",
+              "launchdarkly",
+              "google",
+              "storybook",
+              "sentry",
+              "gatewayapi",
+              "crowdin",
+              "npm",
+              "composer",
+              "PlayStore",
+              "jest",
+            ],
+            aws: [
+              "cloudwatch",
+              "s3",
+              "ec2",
+              "rds",
+              "route53",
+              "waf",
+              "ecr",
+              "lambda",
+            ],
+            graveyard: ["walkme", "scalr", "twilio"],
+          };
+
+          function Card({ img, name }) {
+            return (
+              <div className="card">
+                <header className="card-header">
+                  <p className="card-header-title">
+                    <span class="icon-text is-align-items-center is-flex-wrap-nowrap">
+                      <span class="icon is-medium">
+                        <img
+                          width="32px"
+                          height="32px"
+                          className="image is-square"
+                          src={img}
+                        />
+                      </span>
+
+                      <span className="is-clipped">{name}</span>
+                    </span>
+                  </p>
+                </header>
+              </div>
+            );
+          }
+
+          function Elements({ keys }) {
+            return (
+              <div className="grid">
+                {keys.map((key) => (
+                  <div class="cell">
+                    <Card img={window.images[key]} name={key} />
+                  </div>
+                ))}
+              </div>
+            );
+          }
+
+          function Main() {
+            return (
+              <section class="section">
+                <div className="container">
+                  <div className="columns">
+                    <div className="column">
+                      <article className="box has-background-primary">
+                        <p className="title has-text-primary-invert">
+                          Favorites 💪
+                        </p>
+                        <Elements keys={categories.favorites} />
+                      </article>
+                    </div>
+                    <div className="column">
+                      <article className="box has-background-info">
+                        <p className="title has-text-info-invert">Backend</p>
+                        <Elements keys={categories.backend} />
+                      </article>
+                    </div>
+                    <div className="column">
+                      <article className="box has-background-success">
+                        <p className="title has-text-success-invert">
+                          Frontend
+                        </p>
+                        <Elements keys={categories.frontend} />
+                      </article>
+                    </div>
+                  </div>
+                  <div className="columns">
+                    <div className="column is-one-third">
+                      <article className="box has-background-warning">
+                        <p className="title has-text-warning-invert">AWS</p>
+                        <p className="subtitle has-text-warning-invert">
+                          these and more...
+                        </p>
+                        <Elements keys={categories.aws} />
+                      </article>
+                    </div>
+
+                    <div className="column is-col-span-2 is-col-span-1-mobile">
+                      <article className="box has-background-danger">
+                        <p className="title has-text-danger-invert">Others</p>
+                        <p className="subtitle has-text-danger-invert">
+                          these are also needed...
+                        </p>
+                        <Elements keys={categories.others} />
+                      </article>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            );
+          }
+
+          ReactDOM.render(<Main />, document.getElementById("skills"));
+        </script>
+      </div>
+    </section>
+    <!-- End My Skills -->
+
+    <!--- Education -->
+
+    <section class="block py-6 custom-font has-background-grey-lighter">
+      <div class="container">
+        <div class="column is-4 mx-auto">
+          <h2 data-aos="fade-down" class="title has-text-centered is-uppercase">
+            Education 🎓
+          </h2>
+
+          <div
+            class="title-underline"
+            style="
+              -webkit-font-smoothing: antialiased;
+              text-rendering: optimizeLegibility;
+              text-size-adjust: 100%;
+              color: #4a4a4a;
+              font-size: 1em;
+              font-weight: 400;
+              line-height: 1.5;
+              font-family: 'Nunito', sans-serif;
+              box-sizing: inherit;
+              border-bottom: 10px solid #00d1b2;
+            "
+          ></div>
+          <br />
+        </div>
+
+        <div class="columns mx-3">
+          <div class="column">
+            <div data-aos="zoom-in" class="card">
+              <div class="card-image">
+                <figure class="image is-4by3">
+                  <img
+                    src="https://www.aalto.fi/sites/g/files/flghsv161/files/styles/o_914w_ah_n/public/2021-11/A-logo_around_Campus_12-6-2020_photo_Mikko_Raskinen_060.jpg?itok=zSCst_d7"
+                    alt="Placeholder image"
+                  />
+                </figure>
+              </div>
+              <div class="card-content">
+                <div class="media">
+                  <div class="media-content">
+                    <p class="title is-4">Aalto University</p>
+                    <p class="subtitle is-6">Master of Science (Technology)</p>
+                  </div>
+                </div>
+
+                <div class="content">
+                  <ul>
+                    <li>Major: Electronics</li>
+                    <li>Minor: WWW Technologies</li>
+                  </ul>
+
+                  <br />
+                  <time datetime="2016-1-1">2003-2010</time>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column">
+            <div data-aos="zoom-in" class="card">
+              <div class="card-image">
+                <figure class="image is-4by3">
+                  <img
+                    src="https://sndp.mediadelivery.fi/img/468/cb9fa48e580d54a3d336b845b5e196da.jpg"
+                    alt="Placeholder image"
+                  />
+                </figure>
+              </div>
+              <div class="card-content">
+                <div class="media">
+                  <div class="media-content">
+                    <p class="title is-4">High School of Mänttä</p>
+                    <p class="subtitle is-6">Graduate</p>
+                  </div>
+                </div>
+
+                <div class="content">
+                  <ul>
+                    <li>Advanced mathematics 60/60 <b>L</b></li>
+                    <li>Real (physics) 43/8 <b>L</b></li>
+                  </ul>
+                  <br />
+                  <time datetime="2016-1-1">1999-2002</time>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-hidden-mobile">
+            <div data-aos="zoom-in" class="card">
+              <div class="card-image">
+                <figure class="image is-4by3">
+                  <img
+                    src="https://sndp.mediadelivery.fi/img/468/707de461-585a-5d9d-a009-ad7c5a2f48f8.jpg"
+                    alt="Placeholder image"
+                  />
+                </figure>
+              </div>
+              <div class="card-content">
+                <div class="media">
+                  <div class="media-content">
+                    <p class="title is-4">Comprehensive School</p>
+                  </div>
+                </div>
+
+                <div class="content">
+                  <br />
+                  <time datetime="2016-1-1">1994-1999</time>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- End Education -->
+
+    <!-- Footer -->
+    <footer class="footer late-gray-bg has-background-dark custom-font">
+      <div class="content has-text-centered">
+        <p class="has-text-light">
+          This page is created with
+          <a href="https://bulma.io/"
+            ><strong class="has-text-primary">Bulma</strong></a
+          >
+          and animated with
+          <a href="https://michalsnik.github.io/aos/"
+            ><strong class="has-text-primary">AOS</strong></a
+          >.
+        </p>
+        <p class="has-text-light">
+          Source code can be found from
+          <a
+            href="https://github.com/veikkosalminen/veikkosalminen.github.io/blob/main/cv.html"
+            ><strong class="has-text-primary">Github</strong></a
+          >.
+        </p>
+      </div>
+    </footer>
+    <!-- End Footer -->
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      AOS.init();
+    </script>
+
+    <!-- End Script -->
+  </body>
+</html>
