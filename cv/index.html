@@ -213,7 +213,9 @@
                         />
                       </span>
 
-                      <span className="is-clipped">{name}</span>
+                      <span className="is-clipped" style={{ maxWidth: "50px" }}>
+                        {name}
+                      </span>
                     </span>
                   </p>
                 </header>
@@ -239,20 +241,23 @@
                 <div className="container">
                   <div className="columns">
                     <div className="column">
-                      <article className="box has-background-primary">
+                      <article
+                        className="box has-background-primary"
+                        data-aos="fade-right"
+                      >
                         <p className="title has-text-primary-invert">
                           Favorites 💪
                         </p>
                         <Elements keys={categories.favorites} />
                       </article>
                     </div>
-                    <div className="column">
+                    <div className="column" data-aos="fade-down">
                       <article className="box has-background-info">
                         <p className="title has-text-info-invert">Backend</p>
                         <Elements keys={categories.backend} />
                       </article>
                     </div>
-                    <div className="column">
+                    <div className="column" data-aos="fade-left">
                       <article className="box has-background-success">
                         <p className="title has-text-success-invert">
                           Frontend
@@ -262,7 +267,7 @@
                     </div>
                   </div>
                   <div className="columns">
-                    <div className="column is-one-third">
+                    <div className="column is-one-third" data-aos="fade-up">
                       <article className="box has-background-warning">
                         <p className="title has-text-warning-invert">AWS</p>
                         <p className="subtitle has-text-warning-invert">
@@ -272,7 +277,10 @@
                       </article>
                     </div>
 
-                    <div className="column is-col-span-2 is-col-span-1-mobile">
+                    <div
+                      className="column is-col-span-2 is-col-span-1-mobile"
+                      data-aos="fade-left"
+                    >
                       <article className="box has-background-danger">
                         <p className="title has-text-danger-invert">Others</p>
                         <p className="subtitle has-text-danger-invert">
@@ -288,6 +296,7 @@
           }
 
           ReactDOM.render(<Main />, document.getElementById("skills"));
+          AOS.init();
         </script>
       </div>
     </section>
@@ -411,7 +420,7 @@
         <p class="has-text-light">
           Source code can be found from
           <a
-            href="https://github.com/veikkosalminen/veikkosalminen.github.io/blob/main/cv/index.html"
+            href="https://github.com/veikkosalminen/veikkosalminen.github.io/blob/main/cv.html"
             ><strong class="has-text-primary">Github</strong></a
           >.
         </p>
@@ -420,9 +429,6 @@
     <!-- End Footer -->
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-      AOS.init();
-    </script>
 
     <!-- End Script -->
   </body>
