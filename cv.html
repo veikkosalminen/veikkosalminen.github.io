@@ -386,14 +386,12 @@
 
           function Elements({ keys }) {
             return (
-              <div className="fixed-grid has-auto-count">
-                <div className="grid">
-                  {keys.map((key) => (
-                    <div class="cell">
-                      <Card img={images[key]} name={key} />
-                    </div>
-                  ))}
-                </div>
+              <div className="grid">
+                {keys.map((key) => (
+                  <div class="cell">
+                    <Card img={images[key]} name={key} />
+                  </div>
+                ))}
               </div>
             );
           }
@@ -402,49 +400,49 @@
             return (
               <section class="section">
                 <div className="container">
-                  <div class="fixed-grid has-3-cols has-1-cols-mobile">
-                    <div className="grid">
-                      <div className="cell">
-                        <article className="box has-background-primary">
-                          <p className="title has-text-primary-invert">
-                            Favorites{" "}
-                          </p>
-                          <Elements keys={categories.favorites} />
-                        </article>
-                      </div>
-                      <div className="cell">
-                        <article className="box has-background-info">
-                          <p className="title has-text-info-invert">Backend</p>
-                          <Elements keys={categories.backend} />
-                        </article>
-                      </div>
-                      <div className="cell">
-                        <article className="box has-background-success">
-                          <p className="title has-text-success-invert">
-                            Frontend
-                          </p>
-                          <Elements keys={categories.frontend} />
-                        </article>
-                      </div>
-                      <div className="cell">
-                        <article className="box has-background-warning">
-                          <p className="title has-text-warning-invert">AWS</p>
-                          <p className="subtitle has-text-warning-invert">
-                            these and more...
-                          </p>
-                          <Elements keys={categories.aws} />
-                        </article>
-                      </div>
+                  <div className="columns">
+                    <div className="column">
+                      <article className="box has-background-primary">
+                        <p className="title has-text-primary-invert">
+                          Favorites 💪
+                        </p>
+                        <Elements keys={categories.favorites} />
+                      </article>
+                    </div>
+                    <div className="column">
+                      <article className="box has-background-info">
+                        <p className="title has-text-info-invert">Backend</p>
+                        <Elements keys={categories.backend} />
+                      </article>
+                    </div>
+                    <div className="column">
+                      <article className="box has-background-success">
+                        <p className="title has-text-success-invert">
+                          Frontend
+                        </p>
+                        <Elements keys={categories.frontend} />
+                      </article>
+                    </div>
+                  </div>
+                  <div className="columns">
+                    <div className="column is-one-third">
+                      <article className="box has-background-warning">
+                        <p className="title has-text-warning-invert">AWS</p>
+                        <p className="subtitle has-text-warning-invert">
+                          these and more...
+                        </p>
+                        <Elements keys={categories.aws} />
+                      </article>
+                    </div>
 
-                      <div className="cell is-col-span-2 is-col-span-1-mobile">
-                        <article className="box has-background-danger">
-                          <p className="title has-text-danger-invert">Others</p>
-                          <p className="subtitle has-text-danger-invert">
-                            these are also needed...
-                          </p>
-                          <Elements keys={categories.others} />
-                        </article>
-                      </div>
+                    <div className="column is-col-span-2 is-col-span-1-mobile">
+                      <article className="box has-background-danger">
+                        <p className="title has-text-danger-invert">Others</p>
+                        <p className="subtitle has-text-danger-invert">
+                          these are also needed...
+                        </p>
+                        <Elements keys={categories.others} />
+                      </article>
                     </div>
                   </div>
                 </div>
@@ -545,7 +543,7 @@
               </div>
             </div>
           </div>
-          <div class="column">
+          <div class="column is-hidden-mobile">
             <div data-aos="zoom-in" class="card">
               <div class="card-image">
                 <figure class="image is-4by3">
@@ -577,7 +575,7 @@
     <!-- Footer -->
     <footer class="footer late-gray-bg has-background-dark custom-font">
       <div class="content has-text-centered">
-        <p class="font-light">
+        <p class="has-text-light">
           This page is created with
           <a href="https://bulma.io/"
             ><strong class="has-text-primary">Bulma</strong></a
@@ -585,6 +583,12 @@
           and animated with
           <a href="https://michalsnik.github.io/aos/"
             ><strong class="has-text-primary">AOS</strong></a
+          >.
+        </p>
+        <p class="has-text-light">
+          Source code can be found from
+          <a href="https://github.com/veikkosalminen/veikkosalminen.github.io/blob/main/cv.html"
+            ><strong class="has-text-primary">Github</strong></a
           >.
         </p>
       </div>
