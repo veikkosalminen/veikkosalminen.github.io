@@ -107,11 +107,24 @@
       }
 
       function Main() {
-        const [page, setPage] = React.useState("start");
+        const [page, setPage] = React.useState(
+          () => window.location.hash.slice(1) || "start"
+        );
         const [showNext, setShowNext] = React.useState(false);
 
+        React.useEffect(() => {
+          const handleHashChange = () => {
+            setPage(window.location.hash.slice(1) || "start");
+          };
+          window.addEventListener("hashchange", handleHashChange);
+          return () =>
+            window.removeEventListener("hashchange", handleHashChange);
+        }, []);
+
         const navigate = (newPage) => {
-          setPage(newPage.replace("/", ""));
+          const target = newPage.replace("/", "");
+          window.location.hash = target;
+          setPage(target);
         };
 
         const goto = (page) => {
