@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sky 🪐</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css"
+    />
+    <link
+      href="https://adv-542gd45.web.app/static/css/main.4328ef40.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://jenil.github.io/bulmaswatch/darkly/bulmaswatch.min.css"
+    />
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+
+    <!-- Don't use this in production: -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      function Container({ children }) {
+        return (
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col justify-center items-center min-h-screen gap-8">
+              {children}
+            </div>
+          </div>
+        );
+      }
+
+      function Header({ text, onClick = () => {} }) {
+        return (
+          <h1 className="text-4xl text-center" onClick={() => onClick()}>
+            {text}
+          </h1>
+        );
+      }
+
+      function Code({ answer, onCorrect = () => {} }) {
+        const inputRef = React.useRef(null);
+
+        const [message, setMessage] = React.useState(null);
+        const [buttonText, setButtonText] = React.useState(null);
+
+        const codeGiven = () => {
+          if (message) return;
+          const code = inputRef.current.value;
+          setButtonText("...");
+          if (code.toLowerCase() == answer.toLowerCase()) {
+            setMessage("oikein");
+            setTimeout(() => {
+              setMessage(null);
+              setButtonText(null);
+              onCorrect();
+            }, 2000);
+          } else {
+            setMessage("väärin");
+            setTimeout(() => {
+              setButtonText(null);
+              setMessage(null);
+            }, 2000);
+          }
+        };
+
+        return (
+          <>
+            {message ? (
+              <p>{message}</p>
+            ) : (
+              <input
+                ref={inputRef}
+                type="text"
+                className="border-2 border-gray-500 bg-black text-center"
+              />
+            )}
+            <button
+              className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded"
+              onClick={() => codeGiven()}
+            >
+              {buttonText || "Lähetä"}
+            </button>
+          </>
+        );
+      }
+
+      function Next({ onNext = () => {} }) {
+        React.useEffect(() => {
+          setTimeout(() => {
+            onNext();
+          }, 2000);
+        });
+
+        return (
+          <>
+            <Header text="Seuraava" />
+          </>
+        );
+      }
+
+      function Main() {
+        const [page, setPage] = React.useState("start");
+        const [showNext, setShowNext] = React.useState(false);
+
+        const navigate = (newPage) => {
+          setPage(newPage.replace("/", ""));
+        };
+
+        const goto = (page) => {
+          setShowNext(page);
+        };
+
+        const pages = {
+          start: () => (
+            <Header text="Tervetuloa" onClick={() => navigate("/lasku")} />
+          ),
+          lasku: () => (
+            <>
+              <Header text="1217958 / 987 = " />
+              <Code answer="1234" onCorrect={() => goto("/runaberg")} />
+            </>
+          ),
+          runaberg: () => (
+            <>
+              <Header text="Runebergin syntyvuosi" />
+              <Code answer="1804" onCorrect={() => goto("/topsu")} />
+            </>
+          ),
+          topsu: () => (
+            <>
+              <Header text="Topsu tietää" />
+              <Code answer="5832" onCorrect={() => goto("/maps")} />
+            </>
+          ),
+          maps: () => (
+            <>
+              <img style={{ width: 200 }} src="images/map.png" />
+              <Code answer="021118" onCorrect={() => goto("/messier")} />
+            </>
+          ),
+          messier: () => (
+            <>
+              <img
+                style={{ width: 200 }}
+                src="https://cdn.prod.website-files.com/5fc48f3c9033fb391973b176/6090853f1d24785281b35f0e_M51%20Joel%20Cohen%20(b).jpg"
+              />
+              <Code answer="M51" onCorrect={() => navigate("/end")} />
+            </>
+          ),
+          end: () => <Header text="Pihamökki" />,
+          ohje: () => (
+            <Header text="Avatkaa televisiosta youtube. Menkää veikkosalminen tilille (pinkki) -> omat videot -> 2024" />
+          ),
+        };
+
+        if (showNext)
+          return (
+            <Next
+              onNext={() => {
+                navigate(showNext);
+                setShowNext(false);
+              }}
+            />
+          );
+
+        return page ? pages[page]() : pages.start();
+      }
+
+      ReactDOM.render(
+        <Container>
+          <Main />
+        </Container>,
+        document.getElementById("root")
+      );
+    </script>
+  </body>
+</html>
