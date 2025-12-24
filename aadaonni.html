@@ -164,40 +164,38 @@
           ),
           lasku: () => (
             <>
-              <Header text="1217958 / 987 = " />
-              <Code answer="1234" onCorrect={() => goto("/runaberg")} />
+              <Header text="476 + 758 = " />
+              <Code answer="1234" onCorrect={() => goto("/meemi")} />
             </>
           ),
-          runaberg: () => (
-            <>
-              <Header text="Runebergin syntyvuosi" />
-              <Code answer="1804" onCorrect={() => goto("/topsu")} />
-            </>
-          ),
-          topsu: () => (
-            <>
-              <Header text="Topsu tietää" />
-              <Code answer="5832" onCorrect={() => goto("/maps")} />
-            </>
-          ),
-          maps: () => (
-            <>
-              <img style={{ width: 200 }} src="images/map.png" />
-              <Code answer="021118" onCorrect={() => goto("/messier")} />
-            </>
-          ),
-          messier: () => (
+          meemi: () => (
             <>
               <img
                 style={{ width: 200 }}
-                src="https://cdn.prod.website-files.com/5fc48f3c9033fb391973b176/6090853f1d24785281b35f0e_M51%20Joel%20Cohen%20(b).jpg"
+                src="https://media1.tenor.co/m/6COMq6z3l5oAAAAC/bosnov-67.gif"
               />
-              <Code answer="M51" onCorrect={() => navigate("/end")} />
+              <Code answer="67" onCorrect={() => goto("/martta")} />
             </>
           ),
-          end: () => <Header text="Pihamökki" />,
-          ohje: () => (
-            <Header text="Avatkaa televisiosta youtube. Menkää veikkosalminen tilille (pinkki) -> omat videot -> 2024" />
+          martta: () => (
+            <>
+              <Header text="Kysy Martalta" />
+              <Code answer="5832" onCorrect={() => goto("/emoji")} />
+            </>
+          ),
+          emoji: () => (
+            <>
+              <Header text="🦷 + 🪥" />
+              <Code answer="hammasharja" onCorrect={() => goto("/end")} />
+            </>
+          ),
+          end: () => (
+            <>
+              <Header text="Hyvää joulua!" />
+              <a href="https://superpark-finland.myshopify.com/gift_cards/20768745/3b7e4e17d6f88fb7643bbb1af7ec4121">
+                Lahjakortti - Klikkaa tätä
+              </a>
+            </>
           ),
         };
 
