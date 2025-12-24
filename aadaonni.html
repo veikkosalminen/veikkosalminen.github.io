@@ -27,6 +27,29 @@
   <body>
     <div id="root"></div>
     <script type="text/babel">
+      function useNavigation(initialPage = "start") {
+        const [page, setPage] = React.useState(
+          () => window.location.hash.slice(1) || initialPage
+        );
+
+        React.useEffect(() => {
+          const handleHashChange = () => {
+            setPage(window.location.hash.slice(1) || initialPage);
+          };
+          window.addEventListener("hashchange", handleHashChange);
+          return () =>
+            window.removeEventListener("hashchange", handleHashChange);
+        }, [initialPage]);
+
+        const navigate = (newPage) => {
+          const target = newPage.replace("/", "");
+          window.location.hash = target;
+          setPage(target);
+        };
+
+        return [page, navigate];
+      }
+
       function Container({ children }) {
         return (
           <div className="container mx-auto px-4">
@@ -107,25 +130,8 @@
       }
 
       function Main() {
-        const [page, setPage] = React.useState(
-          () => window.location.hash.slice(1) || "start"
-        );
+        const [page, navigate] = useNavigation("start");
         const [showNext, setShowNext] = React.useState(false);
-
-        React.useEffect(() => {
-          const handleHashChange = () => {
-            setPage(window.location.hash.slice(1) || "start");
-          };
-          window.addEventListener("hashchange", handleHashChange);
-          return () =>
-            window.removeEventListener("hashchange", handleHashChange);
-        }, []);
-
-        const navigate = (newPage) => {
-          const target = newPage.replace("/", "");
-          window.location.hash = target;
-          setPage(target);
-        };
 
         const goto = (page) => {
           setShowNext(page);
