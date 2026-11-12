@@ -361,7 +361,7 @@ button { cursor: pointer; }
     <h3>Lähtötiedot</h3>
     <div class="fields">
       <div class="field wide">
-        <label for="sRho">Hartsin tiheys laatan alla</label>
+        <label for="sRho">Polymeerin tiheys laatan alla</label>
         <div class="dim-input"><input id="sRho" inputmode="decimal" autocomplete="off"><span class="unit">kg/m³</span></div>
         <small>Lattianostoissa tyypillisesti 45–120 kg/m³. Raskaan kuorman alla ja tiiviissä maassa jopa 180–250.</small>
       </div>
@@ -391,7 +391,7 @@ button { cursor: pointer; }
         <small>Hiekkamaassa noin 10 l/m³. Savesta ei ole luotettavaa tietoa.</small>
       </div>
     </div>
-    <p class="note">Arvio perustuu nostettavan tilavuuden ja hartsin tiheyden tuloon sekä maapohjan lujitukseen. Todellinen tiheys selviää vasta työmaalla, joten luku on suuntaa-antava eikä urakkatarjous. Turvemaassa injektointi ei välttämättä toimi lainkaan.</p>
+    <p class="note">Arvio perustuu nostettavan tilavuuden ja polymeerin tiheyden tuloon sekä maapohjan lujitukseen. Todellinen tiheys selviää vasta työmaalla, joten luku on suuntaa-antava eikä urakkatarjous. Turvemaassa injektointi ei välttämättä toimi lainkaan.</p>
     <button type="button" class="danger-link" id="btnReset">Nollaa kaikki painumat</button>
   </div>
 </div>
@@ -697,7 +697,7 @@ button { cursor: pointer; }
     const dt = document.createElement("dt"); dt.className = "total"; dt.textContent = "Yhteensä";
     const dd = document.createElement("dd"); dd.className = "total"; dd.textContent = "≈ " + fmtKg(res.total) + " kg";
     bd.append(dt, dd);
-    $("rangeNote").textContent = "Vaihteluväli " + fmtKg(res.low) + "–" + fmtKg(res.high) + " kg (−30 % / +50 %), koska hartsin todellinen tiheys ja maapohjan menekki selviävät vasta työmaalla.";
+    $("rangeNote").textContent = "Vaihteluväli " + fmtKg(res.low) + "–" + fmtKg(res.high) + " kg (−30 % / +50 %), koska polymeerin todellinen tiheys ja maapohjan menekki selviävät vasta työmaalla.";
     save();
   }
 
@@ -1018,15 +1018,15 @@ button { cursor: pointer; }
     const today = new Date().toLocaleDateString("fi-FI");
 
     doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(28, 30, 33);
-    doc.text("Laatan nosto - hartsin menekkiarvio", X, y); y += 7;
+    doc.text("Laatan nosto - polymeerin menekkiarvio", X, y); y += 7;
     doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(103, 107, 112);
     doc.text((S.info.name ? S.info.name + "  ·  " : "") + today, X, y); y += 9;
 
     doc.setFillColor(29, 106, 134); doc.roundedRect(X, y, RX - X, 18, 2, 2, "F");
     doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
-    doc.text("Nostotilavuus " + fmtVol(res.liftV) + ", hartsia arviolta noin " + fmtKg(res.total) + " kg", X + 5, y + 8);
+    doc.text("Nostotilavuus " + fmtVol(res.liftV) + ", polymeeriä arviolta noin " + fmtKg(res.total) + " kg", X + 5, y + 8);
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-    doc.text("Hartsin vaihteluväli " + fmtKg(res.low) + "-" + fmtKg(res.high) + " kg", X + 5, y + 14);
+    doc.text("Polymeerin vaihteluväli " + fmtKg(res.low) + "-" + fmtKg(res.high) + " kg", X + 5, y + 14);
     y += 25;
 
     function warningBox() {
@@ -1066,7 +1066,7 @@ button { cursor: pointer; }
     row("Mittausruudukko", S.nx + " × " + S.ny + " ruutua, " + ((S.nx + 1) * (S.ny + 1)) + " pistettä");
     row("Keskipainuma / suurin painuma", fmt(res.avgMm, 1) + " / " + fmt(res.maxV, 1) + " mm");
     row("Porausreiät (ehdotus)", res.holes.length + " kpl, väli enintään " + fmt(S.set.hole, 2) + " m");
-    row("Hartsin tiheys laatan alla", fmt(S.set.rho, 0) + " kg/m³");
+    row("Polymeerin tiheys laatan alla", fmt(S.set.rho, 0) + " kg/m³");
     y += 4;
 
     if (res.holes.length) { ensure(18); warningBox(); }
@@ -1080,8 +1080,8 @@ button { cursor: pointer; }
 
     ensure(16);
     doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(103, 107, 112);
-    const disclaimer = "Arvio perustuu nostettavan tilavuuden ja hartsin tiheyden tuloon sekä maapohjan lujitukseen. " +
-      "Vaihteluväli on -30 % / +50 %, koska hartsin todellinen tiheys ja maapohjan menekki selviävät vasta työmaalla. " +
+    const disclaimer = "Arvio perustuu nostettavan tilavuuden ja polymeerin tiheyden tuloon sekä maapohjan lujitukseen. " +
+      "Vaihteluväli on -30 % / +50 %, koska polymeerin todellinen tiheys ja maapohjan menekki selviävät vasta työmaalla. " +
       "Luku on suuntaa-antava eikä urakkatarjous. Laatan kuva ja painumat ovat seuraavalla sivulla.";
     doc.splitTextToSize(disclaimer, RX - X).forEach(line => { doc.text(line, X, y); y += 4; });
 
