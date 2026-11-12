@@ -199,9 +199,9 @@ button { cursor: pointer; }
 .sheet-inner { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; }
 .sheet-head h2 { margin: 0; font-size: 18px; font-weight: 600; }
-.breakdown { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; font-variant-numeric: tabular-nums; }
+.breakdown { display: grid; grid-template-columns: 1fr auto; row-gap: 6px; column-gap: 0; margin: 0; font-variant-numeric: tabular-nums; }
 .breakdown dt { color: var(--muted); }
-.breakdown dd { margin: 0; text-align: right; font-family: var(--font-num); }
+.breakdown dd { margin: 0; text-align: right; padding-left: 12px; font-family: var(--font-num); }
 .breakdown .total { color: var(--fg); font-weight: 600; border-top: 1px solid var(--line); padding-top: 6px; }
 .breakdown dd.total { font-size: 17px; }
 .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
