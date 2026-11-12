@@ -146,7 +146,7 @@ button { cursor: pointer; }
 .result-main { display: flex; flex-direction: column; min-width: 0; }
 .result-kg {
   display: flex; flex-wrap: nowrap; white-space: nowrap; align-items: baseline; column-gap: 8px;
-  font-family: var(--font-num); font-size: clamp(19px, 6.4vw, 26px); font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums;
+  font-family: var(--font-num); font-size: clamp(18px, 5.8vw, 26px); font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums;
 }
 .result-vol { font-weight: 500; }
 .result-sep { opacity: 0.6; font-weight: 400; }
@@ -426,11 +426,9 @@ button { cursor: pointer; }
     if (n >= 10) return fmt(Math.round(n), 0);
     return fmt(n, 1);
   }
-  // Volume: litres below 1000 l, cubic metres above.
+  // Lift volume (the space under the slab), always in cubic metres.
   function fmtVol(m3) {
-    const l = m3 * 1000;
-    if (l >= 1000) return fmt(m3, 2) + " m³";
-    return (l >= 10 ? fmt(Math.round(l), 0) : fmt(l, 1)) + " l";
+    return fmt(m3, m3 < 1 ? 3 : 2) + " m³";
   }
   const colName = i => String.fromCharCode(65 + i);
   const ptName = (i, j) => colName(i) + (j + 1);
@@ -640,7 +638,7 @@ button { cursor: pointer; }
     const rows = [
       ["Pinta-ala", fmt(res.area, 1) + " m²"],
       ["Keskipainuma / suurin", fmt(res.avgMm, 1) + " / " + fmt(res.maxV, 1) + " mm"],
-      ["Painumatilavuus", fmtVol(res.liftV)],
+      ["Nostotilavuus", fmtVol(res.liftV)],
       ["Porausreiät (ehdotus)", res.holes.length + " kpl, väli " + fmt(S.set.hole, 2) + " m"],
       ["Nosto", fmtKg(res.liftKg) + " kg"],
     ];
@@ -902,7 +900,7 @@ button { cursor: pointer; }
 
     doc.setFillColor(29, 106, 134); doc.roundedRect(X, y, RX - X, 18, 2, 2, "F");
     doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
-    doc.text("Painumatilavuus " + fmtVol(res.liftV) + "  ·  hartsia arviolta noin " + fmtKg(res.total) + " kg", X + 5, y + 8);
+    doc.text("Nostotilavuus " + fmtVol(res.liftV) + "  ·  hartsia arviolta noin " + fmtKg(res.total) + " kg", X + 5, y + 8);
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
     doc.text("Hartsin vaihteluväli " + fmtKg(res.low) + "-" + fmtKg(res.high) + " kg", X + 5, y + 14);
     y += 25;
