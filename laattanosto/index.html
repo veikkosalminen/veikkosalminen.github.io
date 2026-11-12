@@ -215,6 +215,41 @@ button { cursor: pointer; }
 }
 .sheet h3 { margin: 0; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
 .note { font-size: 13px; color: var(--muted); margin: 0; }
+.side { display: none; }
+.hover-val {
+  position: absolute; z-index: 2; pointer-events: none;
+  padding: 3px 8px; border-radius: 6px; background: var(--surface); color: var(--fg);
+  border: 1px solid var(--line); box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  font-family: var(--font-num); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* Desktop: drawing on the left, everything else in a scrolling sidebar on the right */
+@media (min-width: 1000px) and (min-height: 560px) {
+  .app {
+    max-width: 1440px;
+    grid-template-columns: minmax(0, 1fr) 390px;
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "stage side" "legend side";
+    column-gap: 32px; row-gap: 10px;
+    padding-block: 24px 20px;
+  }
+  .app > .legend { grid-area: legend; max-width: 520px; }
+  .foot { display: none; }
+  .side {
+    grid-area: side; display: flex; flex-direction: column; gap: 18px;
+    min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+    padding: 2px 6px 24px 2px;
+  }
+  .side .sheet-inner { gap: 14px; max-width: none; margin: 0; }
+  .side .grab, .side .sheet-head, .side #btnSettings, .side .result-more { display: none; }
+  .side .result { cursor: default; }
+  .modal.pop { right: auto; width: 360px; max-width: none; margin: 0; }
+  .modal.pop .grab { display: none; }
+  .modal.pop .btn { white-space: nowrap; }
+  .backdrop.clear { background: transparent; }
+  .pt:hover { border-color: var(--accent); }
+}
+
 .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: -4px auto 0; flex: 0 0 auto; }
 .pdf-btns { display: flex; gap: 8px; }
 .pdf-btns .primary { flex: 1 1 auto; }
@@ -230,7 +265,7 @@ button { cursor: pointer; }
 <body>
 
 <div class="app">
-  <header class="head">
+  <header class="head" id="head">
     <div class="head-row">
       <div class="dim">
         <label for="inpL">Pituus</label>
@@ -251,14 +286,15 @@ button { cursor: pointer; }
   <div class="stage" id="stage">
     <canvas id="cv" aria-hidden="true"></canvas>
     <div class="points" id="points" role="group" aria-label="Mittauspisteet"></div>
+    <div class="hover-val" id="hoverVal" hidden></div>
   </div>
 
-  <footer class="foot">
-    <div class="legend">
+  <footer class="foot" id="foot">
+    <div class="legend" id="legend">
       <span>0 mm</span><div class="legend-bar"></div><span id="legendMax">20 mm</span>
       <button type="button" class="chip" id="btnHoles" aria-pressed="true"><i class="hole-dot" aria-hidden="true"></i><span id="holesLabel">Reiät</span></button>
     </div>
-    <div class="steppers">
+    <div class="steppers" id="steppers">
       <div class="stepper">
         <button type="button" id="nxMinus" aria-label="Vähemmän ruutuja pituussuunnassa">−</button>
         <div class="stepper-val"><b id="nxVal">1</b><span>pituussuunta</span></div>
@@ -278,6 +314,7 @@ button { cursor: pointer; }
       <span class="result-more" aria-label="Erittely">›</span>
     </button>
   </footer>
+  <aside class="side" id="side" aria-label="Lähtötiedot ja tulos"></aside>
 </div>
 
 <div class="backdrop" id="backdrop" hidden></div>
@@ -298,7 +335,7 @@ button { cursor: pointer; }
 </div>
 
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
-  <div class="sheet-inner">
+  <div class="sheet-inner" id="sheetInner">
     <div class="grab" aria-hidden="true"></div>
     <div class="sheet-head"><h2 id="sheetTitle">Erittely ja asetukset</h2><button type="button" class="btn" id="btnCloseSheet" style="padding:0 16px">Sulje</button></div>
     <dl class="breakdown" id="breakdown"></dl>
@@ -512,6 +549,7 @@ button { cursor: pointer; }
   const pointsEl = document.getElementById("points");
   let geom = null;
   let activePt = null;
+  let isDesk = false;
 
   function hexToRgb(h) {
     h = h.trim().replace("#", "");
@@ -613,6 +651,8 @@ button { cursor: pointer; }
       b.style.fontSize = Math.max(11, size * 0.36) + "px";
       b.textContent = fmt(p.v, 1);
       b.setAttribute("aria-label", "Piste " + ptName(i, j) + ": " + fmt(p.v, 1) + " mm" + (p.m ? "" : ", arvio"));
+      b.title = ptName(i, j) + ": " + fmt(p.v, 1) + " mm" + (p.m ? "" : " (arvio)");
+      b.dataset.i = i; b.dataset.j = j;
       b.addEventListener("click", () => openModal(i, j));
       frag.appendChild(b);
     }
@@ -741,12 +781,35 @@ button { cursor: pointer; }
     $("btnPrev").disabled = idx <= 0;
     $("btnNext").disabled = idx >= o.length - 1;
     buildPoints();
+    placeModal(i, j);
     inpPt.focus();
     inpPt.select();
   }
 
+  // On desktop the dialog sits next to the point instead of at the top of the screen.
+  function placeModal(i, j) {
+    if (!isDesk) { modal.style.left = ""; modal.style.top = ""; return; }
+    const btn = pointsEl.children[j * (S.nx + 1) + i];
+    if (!btn) return;
+    const r = btn.getBoundingClientRect();
+    const mw = modal.offsetWidth, mh = modal.offsetHeight;
+    let left = r.right + 14;
+    if (left + mw > window.innerWidth - 12) left = r.left - 14 - mw;
+    left = Math.max(12, left);
+    const top = Math.min(Math.max(12, r.top + r.height / 2 - mh / 2), window.innerHeight - mh - 12);
+    modal.style.left = left + "px"; modal.style.top = top + "px";
+  }
+
   function openModal(i, j) {
+    backdrop.classList.toggle("clear", isDesk);
+    modal.classList.toggle("pop", isDesk);
     backdrop.hidden = false; modal.hidden = false;
+    showPoint(i, j);
+  }
+
+  function moveTo(i, j) {
+    if (!commit()) return;
+    i = Math.max(0, Math.min(S.nx, i)); j = Math.max(0, Math.min(S.ny, j));
     showPoint(i, j);
   }
 
@@ -800,12 +863,27 @@ button { cursor: pointer; }
   $("btnDone").addEventListener("click", () => closeModal(true));
   inpPt.addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); move(1); }
-    if (e.key === "Escape") { e.preventDefault(); closeModal(false); }
+    else if (e.key === "Escape") { e.preventDefault(); closeModal(false); }
+    else if (e.key === "Tab") { e.preventDefault(); move(e.shiftKey ? -1 : 1); }
+    else if (e.key === "ArrowUp" && activePt) { e.preventDefault(); moveTo(activePt[0], activePt[1] - 1); }
+    else if (e.key === "ArrowDown" && activePt) { e.preventDefault(); moveTo(activePt[0], activePt[1] + 1); }
+  });
+
+  // Arrow keys move focus between point buttons in the grid.
+  pointsEl.addEventListener("keydown", e => {
+    const b = e.target.closest(".pt");
+    if (!b) return;
+    const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    const i = Math.max(0, Math.min(S.nx, +b.dataset.i + d[0])), j = Math.max(0, Math.min(S.ny, +b.dataset.j + d[1]));
+    const next = pointsEl.children[j * (S.nx + 1) + i];
+    if (next) next.focus();
   });
 
   // ---------- sheet ----------
   const sheet = $("sheet");
-  function openSheet() { syncInputs(); backdrop.hidden = false; sheet.hidden = false; $("btnCloseSheet").focus(); }
+  function openSheet() { if (isDesk) return; syncInputs(); backdrop.hidden = false; sheet.hidden = false; $("btnCloseSheet").focus(); }
   function closeSheet() { sheet.hidden = true; backdrop.hidden = true; syncInputs(); }
   $("btnSettings").addEventListener("click", openSheet);
   $("btnResult").addEventListener("click", openSheet);
@@ -1118,6 +1196,47 @@ button { cursor: pointer; }
   try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", schedule); } catch (e) {}
   new MutationObserver(schedule).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
+  // ---------- desktop / phone layout ----------
+  // Same elements in both layouts: on a big screen they are moved into the sidebar,
+  // on a phone back into the bottom bar and the settings sheet.
+  const deskMQ = matchMedia("(min-width: 1000px) and (min-height: 560px)");
+  const appEl = document.querySelector(".app");
+  function applyLayout() {
+    const d = deskMQ.matches;
+    if (d === isDesk) return;
+    if (!modal.hidden) closeModal(true);
+    if (!sheet.hidden) closeSheet();
+    isDesk = d;
+    if (d) {
+      $("side").append($("head"), $("steppers"), $("btnResult"), $("sheetInner"));
+      appEl.insertBefore($("legend"), $("side"));
+    } else {
+      appEl.insertBefore($("head"), stage);
+      $("foot").append($("legend"), $("steppers"), $("btnResult"));
+      sheet.append($("sheetInner"));
+    }
+    syncInputs();
+    schedule();
+  }
+  try { deskMQ.addEventListener("change", applyLayout); } catch (e) { deskMQ.addListener(applyLayout); }
+
+  // ---------- hover readout (mouse only) ----------
+  const hoverVal = $("hoverVal");
+  stage.addEventListener("pointermove", e => {
+    if (e.pointerType !== "mouse" || !geom || e.target.closest(".pt")) { hoverVal.hidden = true; return; }
+    const r = stage.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    const u = (x - geom.ox) / geom.rw, v = (y - geom.oy) / geom.rh;
+    if (u < 0 || u > 1 || v < 0 || v > 1) { hoverVal.hidden = true; return; }
+    hoverVal.textContent = "≈ " + fmt(bilinear(S.pts, S.nx, S.ny, u, v), 1) + " mm";
+    hoverVal.hidden = false;
+    const w = hoverVal.offsetWidth;
+    hoverVal.style.left = Math.min(x + 14, r.width - w - 4) + "px";
+    hoverVal.style.top = Math.max(4, y - 30) + "px";
+  });
+  stage.addEventListener("pointerleave", () => { hoverVal.hidden = true; });
+
+  applyLayout();
   syncInputs();
   renderAll();
 })();
