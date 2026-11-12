@@ -211,6 +211,9 @@ button { cursor: pointer; }
 }
 .sheet h3 { margin: 0; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
 .note { font-size: 13px; color: var(--muted); margin: 0; }
+.pdf-btns { display: flex; gap: 8px; }
+.pdf-btns .primary { flex: 1 1 auto; }
+.pdf-btns #btnSharePdf { flex: 0 0 auto; padding: 0 18px; }
 .danger-link { align-self: start; background: none; border: 0; color: var(--danger); font-weight: 600; padding: 4px 0; }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -293,7 +296,10 @@ button { cursor: pointer; }
     <div class="sheet-head"><h2 id="sheetTitle">Erittely ja asetukset</h2><button type="button" class="btn" id="btnCloseSheet" style="padding:0 16px">Sulje</button></div>
     <dl class="breakdown" id="breakdown"></dl>
     <p class="note" id="rangeNote"></p>
-    <button type="button" class="btn primary" id="btnPdf">Tee PDF-raportti</button>
+    <div class="pdf-btns">
+      <button type="button" class="btn primary" id="btnPdf">Lataa PDF-raportti</button>
+      <button type="button" class="btn" id="btnSharePdf" hidden>Jaa</button>
+    </div>
     <p class="note" id="pdfMsg" hidden></p>
 
     <h3>Kohde</h3>
@@ -979,31 +985,55 @@ button { cursor: pointer; }
     return s.toLowerCase().replace(/[åä]/g, "a").replace(/ö/g, "o").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
   }
 
-  $("btnPdf").addEventListener("click", () => {
+  function buildReport() {
     const msg = $("pdfMsg");
     msg.hidden = true;
     if (!window.jspdf || !window.jspdf.jsPDF) {
       msg.textContent = "PDF-työkalu ei latautunut. Tarkista nettiyhteys ja lataa sivu uudelleen.";
-      msg.hidden = false; return;
+      msg.hidden = false; return null;
     }
     let doc;
     try { doc = makePdf(); } catch (e) {
       msg.textContent = "Raportin teko epäonnistui: " + e.message;
-      msg.hidden = false; return;
+      msg.hidden = false; return null;
     }
     const d = new Date();
     const stamp = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
     const fname = "laattanosto-" + (S.info.name ? slug(S.info.name) + "-" : "") + stamp + ".pdf";
-    const touch = matchMedia("(pointer: coarse)").matches;
-    let file = null;
-    try { file = new File([doc.output("blob")], fname, { type: "application/pdf" }); } catch (e) { /* old browser */ }
-    if (touch && file && navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: "Laatan nosto" }).catch(err => {
-        if (err && err.name !== "AbortError") doc.save(fname);
-      });
-    } else {
-      doc.save(fname);
-    }
+    return { blob: doc.output("blob"), fname };
+  }
+
+  // Download as a real file via a temporary link (works in mobile Chrome and Safari).
+  $("btnPdf").addEventListener("click", () => {
+    const r = buildReport();
+    if (!r) return;
+    const url = URL.createObjectURL(r.blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = r.fname; a.rel = "noopener";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    const msg = $("pdfMsg");
+    msg.textContent = "Ladattu: " + r.fname + ". Jos latausta ei näy, avaa sivu Chrome- tai Safari-selaimessa.";
+    msg.hidden = false;
+  });
+
+  // Share sheet (WhatsApp, email…) only where the browser can share files.
+  let canShareFiles = false;
+  try {
+    canShareFiles = !!(navigator.canShare && navigator.canShare({ files: [new File(["x"], "t.pdf", { type: "application/pdf" })] }));
+  } catch (e) { canShareFiles = false; }
+  $("btnSharePdf").hidden = !canShareFiles;
+  $("btnSharePdf").addEventListener("click", () => {
+    const r = buildReport();
+    if (!r) return;
+    const file = new File([r.blob], r.fname, { type: "application/pdf" });
+    navigator.share({ files: [file], title: "Laatan nosto" }).catch(err => {
+      if (err && err.name !== "AbortError") {
+        const msg = $("pdfMsg");
+        msg.textContent = "Jakaminen ei onnistunut. Lataa PDF ja jaa tiedosto sen jälkeen.";
+        msg.hidden = false;
+      }
+    });
   });
 
   // ---------- resize & theme ----------
