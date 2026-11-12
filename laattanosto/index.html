@@ -144,9 +144,14 @@ button { cursor: pointer; }
   background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 14px; padding: 10px 14px;
 }
 .result-main { display: flex; flex-direction: column; min-width: 0; }
-.result-kg { font-family: var(--font-num); font-size: 28px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.result-kg {
+  display: flex; flex-wrap: nowrap; white-space: nowrap; align-items: baseline; column-gap: 8px;
+  font-family: var(--font-num); font-size: clamp(19px, 6.4vw, 26px); font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums;
+}
+.result-vol { font-weight: 500; }
+.result-sep { opacity: 0.6; font-weight: 400; }
 .result-sub { font-size: 12.5px; opacity: 0.85; font-variant-numeric: tabular-nums; }
-.result-more { font-size: 13px; font-weight: 600; white-space: nowrap; opacity: 0.9; }
+.result-more { font-size: 30px; font-weight: 400; line-height: 1; opacity: 0.85; }
 
 /* Landscape phones */
 @media (orientation: landscape) and (max-height: 540px) {
@@ -267,10 +272,10 @@ button { cursor: pointer; }
     </div>
     <button type="button" class="result" id="btnResult" aria-haspopup="dialog">
       <span class="result-main">
-        <span class="result-kg" id="resKg">0 kg</span>
+        <span class="result-kg"><span class="result-vol" id="resVol">0 l</span><span class="result-sep" aria-hidden="true">·</span><span id="resKg">0 kg</span></span>
         <span class="result-sub" id="resSub"></span>
       </span>
-      <span class="result-more">Erittely</span>
+      <span class="result-more" aria-label="Erittely">›</span>
     </button>
   </footer>
 </div>
@@ -420,6 +425,12 @@ button { cursor: pointer; }
     if (n >= 50) return fmt(Math.round(n / 5) * 5, 0);
     if (n >= 10) return fmt(Math.round(n), 0);
     return fmt(n, 1);
+  }
+  // Volume: litres below 1000 l, cubic metres above.
+  function fmtVol(m3) {
+    const l = m3 * 1000;
+    if (l >= 1000) return fmt(m3, 2) + " m³";
+    return (l >= 10 ? fmt(Math.round(l), 0) : fmt(l, 1)) + " l";
   }
   const colName = i => String.fromCharCode(65 + i);
   const ptName = (i, j) => colName(i) + (j + 1);
@@ -620,6 +631,7 @@ button { cursor: pointer; }
     $("nxPlus").disabled = S.nx >= MAX_CELLS; $("nyPlus").disabled = S.ny >= MAX_CELLS;
     $("exampleBar").hidden = !S.example;
 
+    $("resVol").textContent = fmtVol(res.liftV);
     $("resKg").textContent = "≈ " + fmtKg(res.total) + " kg";
     $("resSub").textContent = fmtKg(res.low) + "–" + fmtKg(res.high) + " kg · keskipainuma " + fmt(res.avgMm, 1) + " mm";
     $("btnHoles").setAttribute("aria-pressed", S.showHoles ? "true" : "false");
@@ -628,7 +640,7 @@ button { cursor: pointer; }
     const rows = [
       ["Pinta-ala", fmt(res.area, 1) + " m²"],
       ["Keskipainuma / suurin", fmt(res.avgMm, 1) + " / " + fmt(res.maxV, 1) + " mm"],
-      ["Nostotilavuus", fmt(res.liftV, 3) + " m³"],
+      ["Painumatilavuus", fmtVol(res.liftV)],
       ["Porausreiät (ehdotus)", res.holes.length + " kpl, väli " + fmt(S.set.hole, 2) + " m"],
       ["Nosto", fmtKg(res.liftKg) + " kg"],
     ];
@@ -890,9 +902,9 @@ button { cursor: pointer; }
 
     doc.setFillColor(29, 106, 134); doc.roundedRect(X, y, RX - X, 18, 2, 2, "F");
     doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
-    doc.text("Hartsia arviolta noin " + fmtKg(res.total) + " kg", X + 5, y + 8);
+    doc.text("Painumatilavuus " + fmtVol(res.liftV) + "  ·  hartsia arviolta noin " + fmtKg(res.total) + " kg", X + 5, y + 8);
     doc.setFont("helvetica", "normal"); doc.setFontSize(10);
-    doc.text("Vaihteluväli " + fmtKg(res.low) + "-" + fmtKg(res.high) + " kg", X + 5, y + 14);
+    doc.text("Hartsin vaihteluväli " + fmtKg(res.low) + "-" + fmtKg(res.high) + " kg", X + 5, y + 14);
     y += 25;
 
     const im = reportImage(150, 105);
