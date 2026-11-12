@@ -116,6 +116,14 @@ button { cursor: pointer; }
 .foot { grid-area: foot; display: flex; flex-direction: column; gap: 8px; }
 .legend { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); font-family: var(--font-num); }
 .legend-bar { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--ramp0), var(--ramp1), var(--ramp2)); border: 1px solid var(--line); }
+.chip {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--muted); font-family: var(--font-ui); font-size: 12.5px; font-weight: 500;
+}
+.chip[aria-pressed="true"] { color: var(--fg); border-color: var(--edge); }
+.hole-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--edge); box-shadow: 0 0 0 1.5px var(--surface); opacity: 0.35; }
+.chip[aria-pressed="true"] .hole-dot { opacity: 1; }
 .steppers { display: flex; gap: 8px; }
 .stepper {
   flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: space-between;
@@ -238,7 +246,10 @@ button { cursor: pointer; }
   </div>
 
   <footer class="foot">
-    <div class="legend"><span>0 mm</span><div class="legend-bar"></div><span id="legendMax">20 mm</span></div>
+    <div class="legend">
+      <span>0 mm</span><div class="legend-bar"></div><span id="legendMax">20 mm</span>
+      <button type="button" class="chip" id="btnHoles" aria-pressed="true"><i class="hole-dot" aria-hidden="true"></i><span id="holesLabel">Reiät</span></button>
+    </div>
     <div class="steppers">
       <div class="stepper">
         <button type="button" id="nxMinus" aria-label="Vähemmän ruutuja pituussuunnassa">−</button>
@@ -314,6 +325,11 @@ button { cursor: pointer; }
         <div class="dim-input"><input id="sWaste" inputmode="decimal" autocomplete="off"><span class="unit">%</span></div>
         <small>Halkeamiin, saumoihin ja putkiin karkaava.</small>
       </div>
+      <div class="field wide">
+        <label for="sHole">Porausreikien väli</label>
+        <div class="dim-input"><input id="sHole" inputmode="decimal" autocomplete="off"><span class="unit">m</span></div>
+        <small>Reikäehdotus tulee kohtiin, joissa painumaa on vähintään 2 mm. Yhden reiän vaikutusalue on noin 1–1,5 m.</small>
+      </div>
       <div class="field">
         <label for="sDepth">Maapohjan lujitussyvyys</label>
         <div class="dim-input"><input id="sDepth" inputmode="decimal" autocomplete="off"><span class="unit">m</span></div>
@@ -339,7 +355,8 @@ button { cursor: pointer; }
   const LIQUID_KG_PER_L = 1.07;
   const RANGE_LOW = 0.7, RANGE_HIGH = 1.5;
 
-  const DEFAULT_SET = { rho: 100, gap: 0, depth: 0, rate: 10, waste: 10 };
+  const DEFAULT_SET = { rho: 100, gap: 0, depth: 0, rate: 10, waste: 10, hole: 1.0 };
+  const HOLE_MIN_MM = 2; // no hole suggested where settlement is below this
   const STATE_VERSION = 2;
 
   function emptyState() {
@@ -370,6 +387,7 @@ button { cursor: pointer; }
   if (!(S.ver >= 2) && S.set.depth === 0.3) S.set.depth = 0;
   S.ver = STATE_VERSION;
   S.info = Object.assign({ name: "", notes: "" }, S.info || {});
+  if (typeof S.showHoles !== "boolean") S.showHoles = true;
 
   // Measured values remembered by position, so they come back when the grid returns to a size that has that point.
   const posKey = (u, v) => u.toFixed(6) + "," + v.toFixed(6);
@@ -432,6 +450,21 @@ button { cursor: pointer; }
     S.pts = pts; S.nx = nx; S.ny = ny;
   }
 
+  // Suggested drill holes: an even grid with spacing at most the set hole spacing, edge holes half a spacing in,
+  // kept only where the settlement is at least HOLE_MIN_MM.
+  function holes() {
+    const sp = S.set.hole;
+    if (!(sp > 0)) return [];
+    const nu = Math.max(1, Math.ceil(S.L / sp - 1e-9)), nv = Math.max(1, Math.ceil(S.W / sp - 1e-9));
+    if (nu * nv > 4000) return [];
+    const out = [];
+    for (let b = 0; b < nv; b++) for (let a = 0; a < nu; a++) {
+      const u = (a + 0.5) / nu, v = (b + 0.5) / nv;
+      if (bilinear(S.pts, S.nx, S.ny, u, v) >= HOLE_MIN_MM) out.push({ u, v });
+    }
+    return out;
+  }
+
   // ---------- calculation ----------
   function compute() {
     const { L, W, nx, ny, pts, set } = S;
@@ -451,7 +484,7 @@ button { cursor: pointer; }
     const sub = liftKg + gapKg + soilKg;
     const wasteKg = sub * set.waste / 100;
     const total = sub + wasteKg;
-    return { area, liftV, gapV, avgMm: area > 0 ? liftV / area * 1000 : 0, maxV, liftKg, gapKg, soilKg, wasteKg, total,
+    return { holes: holes(), area, liftV, gapV, avgMm: area > 0 ? liftV / area * 1000 : 0, maxV, liftKg, gapKg, soilKg, wasteKg, total,
              low: total * RANGE_LOW, high: total * RANGE_HIGH };
   }
 
@@ -531,6 +564,15 @@ button { cursor: pointer; }
     ctx.strokeStyle = cssVar("--edge");
     ctx.lineWidth = 2;
     ctx.strokeRect(ox, oy, rw, rh);
+    if (S.showHoles) {
+      ctx.fillStyle = cssVar("--edge");
+      ctx.strokeStyle = cssVar("--surface");
+      ctx.lineWidth = 1.5;
+      res.holes.forEach(h => {
+        ctx.beginPath(); ctx.arc(ox + rw * h.u, oy + rh * h.v, 4.5, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+      });
+    }
 
     document.getElementById("legendMax").textContent = smax + " mm";
     buildPoints();
@@ -574,11 +616,14 @@ button { cursor: pointer; }
 
     $("resKg").textContent = "≈ " + fmtKg(res.total) + " kg";
     $("resSub").textContent = fmtKg(res.low) + "–" + fmtKg(res.high) + " kg · keskipainuma " + fmt(res.avgMm, 1) + " mm";
+    $("btnHoles").setAttribute("aria-pressed", S.showHoles ? "true" : "false");
+    $("holesLabel").textContent = "Reiät " + res.holes.length;
 
     const rows = [
       ["Pinta-ala", fmt(res.area, 1) + " m²"],
       ["Keskipainuma / suurin", fmt(res.avgMm, 1) + " / " + fmt(res.maxV, 1) + " mm"],
       ["Nostotilavuus", fmt(res.liftV, 3) + " m³"],
+      ["Porausreiät (ehdotus)", res.holes.length + " kpl, väli " + fmt(S.set.hole, 2) + " m"],
       ["Nosto", fmtKg(res.liftKg) + " kg"],
     ];
     if (S.set.gap > 0) rows.push(["Raon täyttö", fmtKg(res.gapKg) + " kg"]);
@@ -601,7 +646,7 @@ button { cursor: pointer; }
   function syncInputs() {
     if (document.activeElement !== inpL) inpL.value = fmt(S.L, 2);
     if (document.activeElement !== inpW) inpW.value = fmt(S.W, 2);
-    const map = { sRho: "rho", sGap: "gap", sWaste: "waste", sDepth: "depth", sRate: "rate" };
+    const map = { sRho: "rho", sGap: "gap", sWaste: "waste", sDepth: "depth", sRate: "rate", sHole: "hole" };
     Object.keys(map).forEach(id => { if (document.activeElement !== $(id)) $(id).value = fmt(S.set[map[id]], 2); });
     if (document.activeElement !== $("cName")) $("cName").value = S.info.name;
     if (document.activeElement !== $("cNotes")) $("cNotes").value = S.info.notes;
@@ -638,6 +683,8 @@ button { cursor: pointer; }
   bindSetting("sWaste", "waste", 0, 100);
   bindSetting("sDepth", "depth", 0, 10);
   bindSetting("sRate", "rate", 0, 200);
+  bindSetting("sHole", "hole", 0.2, 10);
+  $("btnHoles").addEventListener("click", () => { S.showHoles = !S.showHoles; renderAll(); });
 
   function step(axis, d) {
     const nx = axis === "x" ? S.nx + d : S.nx;
@@ -796,6 +843,11 @@ button { cursor: pointer; }
     for (let j = 1; j < ny; j++) { const y = M + rh * j / ny; g.moveTo(M, y); g.lineTo(M + rw, y); }
     g.stroke(); g.setLineDash([]);
     g.strokeStyle = REPORT_COLORS.edge; g.lineWidth = 3; g.strokeRect(M, M, rw, rh);
+    res.holes.forEach(h => {
+      g.beginPath(); g.arc(M + rw * h.u, M + rh * h.v, 7, 0, Math.PI * 2);
+      g.fillStyle = REPORT_COLORS.edge; g.fill();
+      g.lineWidth = 2.5; g.strokeStyle = "#ffffff"; g.stroke();
+    });
     // dimension labels
     g.fillStyle = REPORT_COLORS.fg; g.font = "600 22px Helvetica, Arial, sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic";
     g.fillText(fmt(S.L, 2) + " m", M + rw / 2, M + rh + 54);
@@ -842,7 +894,16 @@ button { cursor: pointer; }
     y += im.hmm + 4;
     doc.setFontSize(8.5); doc.setTextColor(103, 107, 112);
     doc.text("Painumat milleinä. Katkoviivapisteet ovat arvioita, joita ei ole mitattu. Väriasteikko 0-" + scaleMax(res.maxV) + " mm.", X, y);
-    y += 8;
+    y += 4;
+    doc.text("Pienet tummat pisteet ovat ehdotettuja porausreikiä (" + res.holes.length + " kpl, väli enintään " + fmt(S.set.hole, 2) + " m).", X, y);
+    y += 6;
+    doc.setFillColor(253, 243, 224); doc.setDrawColor(226, 166, 84);
+    doc.roundedRect(X, y, RX - X, 11, 1.5, 1.5, "FD");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(120, 60, 20);
+    doc.text("Tarkista ennen porausta:", X + 3, y + 4.5);
+    doc.setFont("helvetica", "normal");
+    doc.text("lattialämmitys, vesi- ja viemäriputket, sähkö- ja radonputket, halkeamat ja saumat.", X + 3, y + 8.8);
+    y += 17;
 
     function section(title) {
       ensure(14);
@@ -870,6 +931,7 @@ button { cursor: pointer; }
     row("Pinta-ala", fmt(res.area, 1) + " m²");
     row("Mittausruudukko", S.nx + " × " + S.ny + " ruutua, " + ((S.nx + 1) * (S.ny + 1)) + " pistettä");
     row("Keskipainuma / suurin painuma", fmt(res.avgMm, 1) + " / " + fmt(res.maxV, 1) + " mm");
+    row("Porausreiät (ehdotus)", res.holes.length + " kpl, väli enintään " + fmt(S.set.hole, 2) + " m");
     row("Hartsin tiheys laatan alla", fmt(S.set.rho, 0) + " kg/m³");
     y += 4;
 
