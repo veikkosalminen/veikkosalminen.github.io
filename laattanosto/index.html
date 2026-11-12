@@ -904,21 +904,15 @@ button { cursor: pointer; }
     doc.text("Hartsin vaihteluväli " + fmtKg(res.low) + "-" + fmtKg(res.high) + " kg", X + 5, y + 14);
     y += 25;
 
-    const im = reportImage(150, 105);
-    doc.addImage(im.url, "JPEG", X + (RX - X - im.wmm) / 2, y, im.wmm, im.hmm);
-    y += im.hmm + 4;
-    doc.setFontSize(8.5); doc.setTextColor(103, 107, 112);
-    doc.text("Painumat milleinä. Katkoviivapisteet ovat arvioita, joita ei ole mitattu. Väriasteikko 0-" + scaleMax(res.maxV) + " mm.", X, y);
-    y += 4;
-    doc.text("Pienet tummat pisteet ovat ehdotettuja porausreikiä (" + res.holes.length + " kpl, väli enintään " + fmt(S.set.hole, 2) + " m).", X, y);
-    y += 6;
-    doc.setFillColor(253, 243, 224); doc.setDrawColor(226, 166, 84);
-    doc.roundedRect(X, y, RX - X, 11, 1.5, 1.5, "FD");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(120, 60, 20);
-    doc.text("Tarkista ennen porausta:", X + 3, y + 4.5);
-    doc.setFont("helvetica", "normal");
-    doc.text("lattialämmitys, vesi- ja viemäriputket, sähkö- ja radonputket, halkeamat ja saumat.", X + 3, y + 8.8);
-    y += 17;
+    function warningBox() {
+      doc.setFillColor(253, 243, 224); doc.setDrawColor(226, 166, 84);
+      doc.roundedRect(X, y, RX - X, 11, 1.5, 1.5, "FD");
+      doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(120, 60, 20);
+      doc.text("Tarkista ennen porausta:", X + 3, y + 4.5);
+      doc.setFont("helvetica", "normal");
+      doc.text("lattialämmitys, vesi- ja viemäriputket, sähkö- ja radonputket, halkeamat ja saumat.", X + 3, y + 8.8);
+      y += 17;
+    }
 
     function section(title) {
       ensure(14);
@@ -950,8 +944,46 @@ button { cursor: pointer; }
     row("Hartsin tiheys laatan alla", fmt(S.set.rho, 0) + " kg/m³");
     y += 4;
 
-    // point table (heading and table kept on the same page)
-    ensure(14 + 5.5 * (S.ny + 3));
+    if (res.holes.length) { ensure(18); warningBox(); }
+
+    if (S.info.notes.trim()) {
+      section("Muistiinpanot");
+      doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(28, 30, 33);
+      doc.splitTextToSize(S.info.notes.trim(), RX - X).forEach(line => { ensure(5); doc.text(line, X, y); y += 5; });
+      y += 4;
+    }
+
+    ensure(16);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(103, 107, 112);
+    const disclaimer = "Arvio perustuu nostettavan tilavuuden ja hartsin tiheyden tuloon sekä maapohjan lujitukseen. " +
+      "Vaihteluväli on -30 % / +50 %, koska hartsin todellinen tiheys ja maapohjan menekki selviävät vasta työmaalla. " +
+      "Luku on suuntaa-antava eikä urakkatarjous. Laatan kuva ja painumat ovat seuraavalla sivulla.";
+    doc.splitTextToSize(disclaimer, RX - X).forEach(line => { doc.text(line, X, y); y += 4; });
+
+    // ---- page 2: drawing as large as the page allows ----
+    doc.addPage(); y = 20;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(28, 30, 33);
+    doc.text("Laatan painumat ja porausreiät", X, y); y += 6;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(103, 107, 112);
+    doc.text((S.info.name ? S.info.name + "  ·  " : "") + fmt(S.L, 2) + " × " + fmt(S.W, 2) + " m  ·  " + today, X, y); y += 6;
+
+    // A small table (up to about 5 rows) stays under the drawing, which is shrunk a little to make room;
+    // a bigger table goes to page 3 and the drawing gets the full height.
+    const tableH = 14 + 5.5 * (S.ny + 2) + 8;
+    const im = reportImage(164, tableH <= 60 ? 212 - tableH : 205);
+    doc.addImage(im.url, "JPEG", X + (RX - X - im.wmm) / 2, y, im.wmm, im.hmm);
+    y += im.hmm + 4;
+    doc.setFontSize(8.5); doc.setTextColor(103, 107, 112);
+    doc.text("Painumat milleinä. Katkoviivapisteet ovat arvioita, joita ei ole mitattu. Väriasteikko 0-" + scaleMax(res.maxV) + " mm.", X, y);
+    y += 4;
+    if (res.holes.length) {
+      doc.text("Pienet tummat pisteet ovat ehdotettuja porausreikiä (" + res.holes.length + " kpl, väli enintään " + fmt(S.set.hole, 2) + " m).", X, y);
+      y += 4;
+    }
+    y += 6;
+
+    // point table: stays on page 2 if it fits, otherwise moves whole to page 3
+    ensure(14 + 5.5 * (S.ny + 2) + 8);
     section("Painumat pisteittäin (mm)");
     const cols = S.nx + 2;
     const cw = Math.min(18, (RX - X) / cols);
@@ -971,21 +1003,7 @@ button { cursor: pointer; }
       y += 5.5;
     }
     doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(103, 107, 112);
-    ensure(5); doc.text("Suluissa arvio, jota ei ole mitattu.", X, y); y += 8;
-
-    if (S.info.notes.trim()) {
-      section("Muistiinpanot");
-      doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(28, 30, 33);
-      doc.splitTextToSize(S.info.notes.trim(), RX - X).forEach(line => { ensure(5); doc.text(line, X, y); y += 5; });
-      y += 4;
-    }
-
-    ensure(16);
-    doc.setFontSize(8.5); doc.setTextColor(103, 107, 112);
-    const disclaimer = "Arvio perustuu nostettavan tilavuuden ja hartsin tiheyden tuloon sekä maapohjan lujitukseen. " +
-      "Vaihteluväli on -30 % / +50 %, koska hartsin todellinen tiheys ja maapohjan menekki selviävät vasta työmaalla. " +
-      "Luku on suuntaa-antava eikä urakkatarjous.";
-    doc.splitTextToSize(disclaimer, RX - X).forEach(line => { doc.text(line, X, y); y += 4; });
+    doc.text("Suluissa arvio, jota ei ole mitattu.", X, y);
 
     return doc;
   }
