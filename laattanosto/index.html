@@ -215,6 +215,7 @@ button { cursor: pointer; }
 }
 .sheet h3 { margin: 0; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
 .note { font-size: 13px; color: var(--muted); margin: 0; }
+.grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: -4px auto 0; flex: 0 0 auto; }
 .pdf-btns { display: flex; gap: 8px; }
 .pdf-btns .primary { flex: 1 1 auto; }
 .pdf-btns #btnSharePdf { flex: 0 0 auto; padding: 0 18px; }
@@ -282,6 +283,7 @@ button { cursor: pointer; }
 <div class="backdrop" id="backdrop" hidden></div>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+  <div class="grab" aria-hidden="true"></div>
   <div class="modal-head"><h2 id="modalTitle">Piste A1</h2><span id="modalInfo"></span></div>
   <div class="dim-input">
     <input id="inpPt" inputmode="decimal" autocomplete="off" enterkeyhint="next" aria-label="Painuma milleinä">
@@ -297,6 +299,7 @@ button { cursor: pointer; }
 
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
   <div class="sheet-inner">
+    <div class="grab" aria-hidden="true"></div>
     <div class="sheet-head"><h2 id="sheetTitle">Erittely ja asetukset</h2><button type="button" class="btn" id="btnCloseSheet" style="padding:0 16px">Sulje</button></div>
     <dl class="breakdown" id="breakdown"></dl>
     <p class="note" id="rangeNote"></p>
@@ -809,6 +812,50 @@ button { cursor: pointer; }
   $("btnCloseSheet").addEventListener("click", closeSheet);
   $("btnReset").addEventListener("click", () => { zeroAll(); });
   sheet.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+
+  // Swipe down to close. The sheet only starts dragging when it is scrolled to the top,
+  // and drags never start on a text field so text selection keeps working.
+  function swipeToClose(el, onClose) {
+    let startY = null, dy = 0, dragging = false, t0 = 0;
+    const reset = animate => {
+      el.style.transition = animate ? "transform 160ms ease-out" : "";
+      el.style.transform = "";
+      if (animate) setTimeout(() => { el.style.transition = ""; }, 170);
+    };
+    el.addEventListener("touchstart", e => {
+      if (e.touches.length !== 1 || e.target.closest("input, textarea")) { startY = null; return; }
+      startY = e.touches[0].clientY; dy = 0; dragging = false; t0 = Date.now();
+    }, { passive: true });
+    el.addEventListener("touchmove", e => {
+      if (startY === null) return;
+      const d = e.touches[0].clientY - startY;
+      if (!dragging) {
+        if (d > 8 && el.scrollTop <= 0) { dragging = true; el.style.transition = "none"; }
+        else if (d < -8 || el.scrollTop > 0) { startY = null; return; }
+        else return;
+      }
+      dy = Math.max(0, d);
+      el.style.transform = "translateY(" + dy + "px)";
+      e.preventDefault();
+    }, { passive: false });
+    const end = () => {
+      if (startY === null) return;
+      startY = null;
+      if (!dragging) return;
+      const fast = dy / Math.max(1, Date.now() - t0) > 0.5;
+      if (dy > 90 || (fast && dy > 30)) {
+        el.style.transition = "transform 160ms ease-in";
+        el.style.transform = "translateY(" + window.innerHeight + "px)";
+        setTimeout(() => { onClose(); reset(false); }, 160);
+      } else {
+        reset(true);
+      }
+    };
+    el.addEventListener("touchend", end);
+    el.addEventListener("touchcancel", () => { if (dragging) reset(true); startY = null; });
+  }
+  swipeToClose(sheet, closeSheet);
+  swipeToClose(modal, () => closeModal(true));
 
   backdrop.addEventListener("click", () => {
     if (!modal.hidden) closeModal(true);
