@@ -339,7 +339,8 @@ button { cursor: pointer; }
   const LIQUID_KG_PER_L = 1.07;
   const RANGE_LOW = 0.7, RANGE_HIGH = 1.5;
 
-  const DEFAULT_SET = { rho: 100, gap: 0, depth: 0.3, rate: 10, waste: 10 };
+  const DEFAULT_SET = { rho: 100, gap: 0, depth: 0, rate: 10, waste: 10 };
+  const STATE_VERSION = 2;
 
   function emptyState() {
     return {
@@ -365,6 +366,9 @@ button { cursor: pointer; }
   } catch (e) { /* storage unavailable */ }
   if (!S) S = emptyState();
   S.set = Object.assign({}, DEFAULT_SET, S.set || {});
+  // v1 defaulted soil strengthening to 0.3 m; an untouched old default becomes the new default 0.
+  if (!(S.ver >= 2) && S.set.depth === 0.3) S.set.depth = 0;
+  S.ver = STATE_VERSION;
   S.info = Object.assign({ name: "", notes: "" }, S.info || {});
 
   // Measured values remembered by position, so they come back when the grid returns to a size that has that point.
