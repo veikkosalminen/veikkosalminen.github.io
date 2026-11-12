@@ -196,6 +196,11 @@ button { cursor: pointer; }
 .field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .field.wide { grid-column: 1 / -1; }
 .field small { color: var(--muted); font-size: 12px; }
+.field > input { padding-right: 12px; font-family: var(--font-ui); font-size: 16px; }
+.field textarea {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--surface); font: inherit; font-size: 16px; color: var(--fg); resize: vertical;
+}
 .sheet h3 { margin: 0; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
 .note { font-size: 13px; color: var(--muted); margin: 0; }
 .danger-link { align-self: start; background: none; border: 0; color: var(--danger); font-weight: 600; padding: 4px 0; }
@@ -277,6 +282,20 @@ button { cursor: pointer; }
     <div class="sheet-head"><h2 id="sheetTitle">Erittely ja asetukset</h2><button type="button" class="btn" id="btnCloseSheet" style="padding:0 16px">Sulje</button></div>
     <dl class="breakdown" id="breakdown"></dl>
     <p class="note" id="rangeNote"></p>
+    <button type="button" class="btn primary" id="btnPdf">Tee PDF-raportti</button>
+    <p class="note" id="pdfMsg" hidden></p>
+
+    <h3>Kohde</h3>
+    <div class="fields">
+      <div class="field wide">
+        <label for="cName">Kohteen nimi tai osoite</label>
+        <input id="cName" autocomplete="off" placeholder="Esim. Koivukuja 3, olohuone">
+      </div>
+      <div class="field wide">
+        <label for="cNotes">Muistiinpanot</label>
+        <textarea id="cNotes" rows="3" placeholder="Maalaji, putket, halkeamat, kuormat…"></textarea>
+      </div>
+    </div>
 
     <h3>Lähtötiedot</h3>
     <div class="fields">
@@ -311,6 +330,7 @@ button { cursor: pointer; }
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" async></script>
 <script>
 (function () {
   "use strict";
@@ -321,11 +341,10 @@ button { cursor: pointer; }
 
   const DEFAULT_SET = { rho: 100, gap: 0, depth: 0.3, rate: 10, waste: 10 };
 
-  function exampleState() {
-    const vals = [[0, 6, 2], [8, 25, 10], [3, 9, 0]];
+  function emptyState() {
     return {
-      L: 6, W: 4, nx: 2, ny: 2, example: true,
-      pts: vals.map(r => r.map(v => ({ v, m: true }))),
+      L: 3, W: 4, nx: 1, ny: 1, example: false,
+      pts: [[{ v: 0, m: false }, { v: 0, m: false }], [{ v: 0, m: false }, { v: 0, m: false }]],
       set: Object.assign({}, DEFAULT_SET)
     };
   }
@@ -344,8 +363,9 @@ button { cursor: pointer; }
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) { const p = JSON.parse(raw); if (valid(p)) S = p; }
   } catch (e) { /* storage unavailable */ }
-  if (!S) S = exampleState();
+  if (!S) S = emptyState();
   S.set = Object.assign({}, DEFAULT_SET, S.set || {});
+  S.info = Object.assign({ name: "", notes: "" }, S.info || {});
 
   // Measured values remembered by position, so they come back when the grid returns to a size that has that point.
   const posKey = (u, v) => u.toFixed(6) + "," + v.toFixed(6);
@@ -579,7 +599,11 @@ button { cursor: pointer; }
     if (document.activeElement !== inpW) inpW.value = fmt(S.W, 2);
     const map = { sRho: "rho", sGap: "gap", sWaste: "waste", sDepth: "depth", sRate: "rate" };
     Object.keys(map).forEach(id => { if (document.activeElement !== $(id)) $(id).value = fmt(S.set[map[id]], 2); });
+    if (document.activeElement !== $("cName")) $("cName").value = S.info.name;
+    if (document.activeElement !== $("cNotes")) $("cNotes").value = S.info.notes;
   }
+  $("cName").addEventListener("input", e => { S.info.name = e.target.value; save(); });
+  $("cNotes").addEventListener("input", e => { S.info.notes = e.target.value; save(); });
 
   function bindDim(input, key) {
     input.addEventListener("input", () => {
@@ -723,6 +747,197 @@ button { cursor: pointer; }
   backdrop.addEventListener("click", () => {
     if (!modal.hidden) closeModal(true);
     else if (!sheet.hidden) closeSheet();
+  });
+
+  // ---------- PDF report ----------
+  const REPORT_COLORS = { r0: "#e6e3da", r1: "#e2a654", r2: "#b5402a", edge: "#3b3e42", grid: "rgba(28,30,33,0.25)", fg: "#1c1e21", muted: "#676b70" };
+
+  function lutFrom(h0, h1, h2) {
+    const c0 = hexToRgb(h0), c1 = hexToRgb(h1), c2 = hexToRgb(h2);
+    const lut = new Uint8ClampedArray(256 * 3);
+    for (let k = 0; k < 256; k++) {
+      const t = k / 255;
+      const [a, b, f] = t < 0.5 ? [c0, c1, t / 0.5] : [c1, c2, (t - 0.5) / 0.5];
+      for (let ch = 0; ch < 3; ch++) lut[k * 3 + ch] = a[ch] + (b[ch] - a[ch]) * f;
+    }
+    return lut;
+  }
+
+  function reportImage(maxWmm, maxHmm) {
+    const PXMM = 8, M = 64;
+    let wmm = maxWmm, hmm = wmm * S.W / S.L;
+    if (hmm > maxHmm) { hmm = maxHmm; wmm = hmm * S.L / S.W; }
+    const rw = Math.round(wmm * PXMM), rh = Math.round(hmm * PXMM);
+    const c = document.createElement("canvas");
+    c.width = rw + 2 * M; c.height = rh + 2 * M;
+    const g = c.getContext("2d");
+    g.fillStyle = "#ffffff"; g.fillRect(0, 0, c.width, c.height);
+    const { pts, nx, ny } = S;
+    const res = compute();
+    const smax = scaleMax(res.maxV);
+    const lut = lutFrom(REPORT_COLORS.r0, REPORT_COLORS.r1, REPORT_COLORS.r2);
+    const img = g.createImageData(rw, rh);
+    for (let y = 0; y < rh; y++) {
+      const v = y / Math.max(1, rh - 1);
+      for (let x = 0; x < rw; x++) {
+        const u = x / Math.max(1, rw - 1);
+        const k = Math.max(0, Math.min(255, Math.round(bilinear(pts, nx, ny, u, v) / smax * 255))) * 3;
+        const o = (y * rw + x) * 4;
+        img.data[o] = lut[k]; img.data[o + 1] = lut[k + 1]; img.data[o + 2] = lut[k + 2]; img.data[o + 3] = 255;
+      }
+    }
+    g.putImageData(img, M, M);
+    g.strokeStyle = REPORT_COLORS.grid; g.lineWidth = 2; g.setLineDash([8, 8]); g.beginPath();
+    for (let i = 1; i < nx; i++) { const x = M + rw * i / nx; g.moveTo(x, M); g.lineTo(x, M + rh); }
+    for (let j = 1; j < ny; j++) { const y = M + rh * j / ny; g.moveTo(M, y); g.lineTo(M + rw, y); }
+    g.stroke(); g.setLineDash([]);
+    g.strokeStyle = REPORT_COLORS.edge; g.lineWidth = 3; g.strokeRect(M, M, rw, rh);
+    // dimension labels
+    g.fillStyle = REPORT_COLORS.fg; g.font = "600 22px Helvetica, Arial, sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic";
+    g.fillText(fmt(S.L, 2) + " m", M + rw / 2, M + rh + 54);
+    g.save(); g.translate(M - 40, M + rh / 2); g.rotate(-Math.PI / 2); g.fillText(fmt(S.W, 2) + " m", 0, 0); g.restore();
+    // points
+    const r = Math.max(18, Math.min(30, Math.min(rw / nx, rh / ny) / 2 - 4));
+    g.textBaseline = "middle";
+    for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) {
+      const p = pts[j][i];
+      const x = M + rw * i / nx, y = M + rh * j / ny;
+      g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
+      g.fillStyle = "#ffffff"; g.fill();
+      g.setLineDash(p.m ? [] : [5, 4]); g.lineWidth = 2.5; g.strokeStyle = REPORT_COLORS.edge; g.stroke(); g.setLineDash([]);
+      g.fillStyle = p.m ? REPORT_COLORS.fg : REPORT_COLORS.muted;
+      g.font = (p.m ? "700 " : "500 ") + Math.round(r * 0.8) + "px Helvetica, Arial, sans-serif";
+      g.fillText(fmt(p.v, 1), x, y + 1);
+    }
+    return { url: c.toDataURL("image/jpeg", 0.88), wmm: c.width / PXMM, hmm: c.height / PXMM };
+  }
+
+  function makePdf() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const res = compute();
+    const X = 15, RX = 195, BOTTOM = 280;
+    let y = 20;
+    const ensure = h => { if (y + h > BOTTOM) { doc.addPage(); y = 20; } };
+    const today = new Date().toLocaleDateString("fi-FI");
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(28, 30, 33);
+    doc.text("Laatan nosto - hartsin menekkiarvio", X, y); y += 7;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(103, 107, 112);
+    doc.text((S.info.name ? S.info.name + "  ·  " : "") + today, X, y); y += 9;
+
+    doc.setFillColor(29, 106, 134); doc.roundedRect(X, y, RX - X, 18, 2, 2, "F");
+    doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(16);
+    doc.text("Hartsia arviolta noin " + fmtKg(res.total) + " kg", X + 5, y + 8);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    doc.text("Vaihteluväli " + fmtKg(res.low) + "-" + fmtKg(res.high) + " kg", X + 5, y + 14);
+    y += 25;
+
+    const im = reportImage(150, 105);
+    doc.addImage(im.url, "JPEG", X + (RX - X - im.wmm) / 2, y, im.wmm, im.hmm);
+    y += im.hmm + 4;
+    doc.setFontSize(8.5); doc.setTextColor(103, 107, 112);
+    doc.text("Painumat milleinä. Katkoviivapisteet ovat arvioita, joita ei ole mitattu. Väriasteikko 0-" + scaleMax(res.maxV) + " mm.", X, y);
+    y += 8;
+
+    function section(title) {
+      ensure(14);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(28, 30, 33);
+      doc.text(title, X, y); y += 2;
+      doc.setDrawColor(213, 211, 204); doc.line(X, y, RX, y); y += 5;
+    }
+    function row(k, v, bold) {
+      ensure(6);
+      doc.setFont("helvetica", bold ? "bold" : "normal"); doc.setFontSize(10);
+      doc.setTextColor(bold ? 28 : 80, bold ? 30 : 84, bold ? 33 : 89);
+      doc.text(k, X, y); doc.text(v, RX, y, { align: "right" }); y += 5.5;
+    }
+
+    section("Erittely");
+    row("Nosto (" + fmt(res.liftV, 3) + " m³ × " + fmt(S.set.rho, 0) + " kg/m³)", fmtKg(res.liftKg) + " kg");
+    if (S.set.gap > 0) row("Raon täyttö (" + fmt(S.set.gap, 1) + " mm)", fmtKg(res.gapKg) + " kg");
+    if (S.set.depth > 0 && S.set.rate > 0) row("Maapohjan lujitus (" + fmt(S.set.depth, 2) + " m, " + fmt(S.set.rate, 1) + " l/m³)", fmtKg(res.soilKg) + " kg");
+    if (S.set.waste > 0) row("Hukka " + fmt(S.set.waste, 1) + " %", fmtKg(res.wasteKg) + " kg");
+    row("Yhteensä", "noin " + fmtKg(res.total) + " kg", true);
+    y += 4;
+
+    section("Lähtötiedot");
+    row("Laatan mitat", fmt(S.L, 2) + " × " + fmt(S.W, 2) + " m");
+    row("Pinta-ala", fmt(res.area, 1) + " m²");
+    row("Mittausruudukko", S.nx + " × " + S.ny + " ruutua, " + ((S.nx + 1) * (S.ny + 1)) + " pistettä");
+    row("Keskipainuma / suurin painuma", fmt(res.avgMm, 1) + " / " + fmt(res.maxV, 1) + " mm");
+    row("Hartsin tiheys laatan alla", fmt(S.set.rho, 0) + " kg/m³");
+    y += 4;
+
+    // point table (heading and table kept on the same page)
+    ensure(14 + 5.5 * (S.ny + 3));
+    section("Painumat pisteittäin (mm)");
+    const cols = S.nx + 2;
+    const cw = Math.min(18, (RX - X) / cols);
+    doc.setFontSize(9.5);
+    doc.setFont("helvetica", "bold"); doc.setTextColor(103, 107, 112);
+    for (let i = 0; i <= S.nx; i++) doc.text(colName(i), X + cw * (i + 1) + cw / 2, y, { align: "center" });
+    y += 5.5;
+    for (let j = 0; j <= S.ny; j++) {
+      doc.setFont("helvetica", "bold"); doc.setTextColor(103, 107, 112);
+      doc.text(String(j + 1), X + cw / 2, y, { align: "center" });
+      for (let i = 0; i <= S.nx; i++) {
+        const p = S.pts[j][i];
+        doc.setFont("helvetica", p.m ? "normal" : "italic");
+        doc.setTextColor(p.m ? 28 : 140, p.m ? 30 : 144, p.m ? 33 : 150);
+        doc.text(p.m ? fmt(p.v, 1) : "(" + fmt(p.v, 1) + ")", X + cw * (i + 1) + cw / 2, y, { align: "center" });
+      }
+      y += 5.5;
+    }
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(103, 107, 112);
+    ensure(5); doc.text("Suluissa arvio, jota ei ole mitattu.", X, y); y += 8;
+
+    if (S.info.notes.trim()) {
+      section("Muistiinpanot");
+      doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(28, 30, 33);
+      doc.splitTextToSize(S.info.notes.trim(), RX - X).forEach(line => { ensure(5); doc.text(line, X, y); y += 5; });
+      y += 4;
+    }
+
+    ensure(16);
+    doc.setFontSize(8.5); doc.setTextColor(103, 107, 112);
+    const disclaimer = "Arvio perustuu nostettavan tilavuuden ja hartsin tiheyden tuloon sekä maapohjan lujitukseen. " +
+      "Vaihteluväli on -30 % / +50 %, koska hartsin todellinen tiheys ja maapohjan menekki selviävät vasta työmaalla. " +
+      "Luku on suuntaa-antava eikä urakkatarjous.";
+    doc.splitTextToSize(disclaimer, RX - X).forEach(line => { doc.text(line, X, y); y += 4; });
+
+    return doc;
+  }
+
+  function slug(s) {
+    return s.toLowerCase().replace(/[åä]/g, "a").replace(/ö/g, "o").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  }
+
+  $("btnPdf").addEventListener("click", () => {
+    const msg = $("pdfMsg");
+    msg.hidden = true;
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      msg.textContent = "PDF-työkalu ei latautunut. Tarkista nettiyhteys ja lataa sivu uudelleen.";
+      msg.hidden = false; return;
+    }
+    let doc;
+    try { doc = makePdf(); } catch (e) {
+      msg.textContent = "Raportin teko epäonnistui: " + e.message;
+      msg.hidden = false; return;
+    }
+    const d = new Date();
+    const stamp = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    const fname = "laattanosto-" + (S.info.name ? slug(S.info.name) + "-" : "") + stamp + ".pdf";
+    const touch = matchMedia("(pointer: coarse)").matches;
+    let file = null;
+    try { file = new File([doc.output("blob")], fname, { type: "application/pdf" }); } catch (e) { /* old browser */ }
+    if (touch && file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "Laatan nosto" }).catch(err => {
+        if (err && err.name !== "AbortError") doc.save(fname);
+      });
+    } else {
+      doc.save(fname);
+    }
   });
 
   // ---------- resize & theme ----------
