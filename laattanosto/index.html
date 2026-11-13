@@ -233,7 +233,7 @@ button { cursor: pointer; }
     column-gap: 32px; row-gap: 10px;
     padding-block: 24px 20px;
   }
-  .app > .legend { grid-area: legend; max-width: 520px; }
+  .app > .legend { grid-area: legend; width: 100%; max-width: 520px; justify-self: center; }
   .foot { display: none; }
   .side {
     grid-area: side; display: flex; flex-direction: column; gap: 18px;
@@ -253,7 +253,7 @@ button { cursor: pointer; }
 .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: -4px auto 0; flex: 0 0 auto; }
 .pdf-btns { display: flex; gap: 8px; }
 .pdf-btns .primary { flex: 1 1 auto; }
-.pdf-btns #btnSharePdf { flex: 0 0 auto; padding: 0 18px; }
+.pdf-btns #btnSharePdf, .pdf-btns #btnDlPdf { flex: 0 0 auto; padding: 0 18px; }
 .danger-link { align-self: start; background: none; border: 0; color: var(--danger); font-weight: 600; padding: 4px 0; }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -343,6 +343,7 @@ button { cursor: pointer; }
     <div class="pdf-btns">
       <button type="button" class="btn primary" id="btnPdf">Lataa PDF-raportti</button>
       <button type="button" class="btn" id="btnSharePdf" hidden>Jaa</button>
+      <button type="button" class="btn" id="btnDlPdf" hidden>Lataa</button>
     </div>
     <p class="note" id="pdfMsg" hidden></p>
 
@@ -1194,7 +1195,20 @@ button { cursor: pointer; }
   }
 
   // Download as a real file via a temporary link (works in mobile Chrome and Safari).
+  // Desktop opens the report in the browser's PDF viewer; phones download it as a file.
   $("btnPdf").addEventListener("click", () => {
+    if (deskMQ.matches) openPdf(); else downloadPdf();
+  });
+  $("btnDlPdf").addEventListener("click", downloadPdf);
+  function openPdf() {
+    const r = buildReport();
+    if (!r) return;
+    const url = URL.createObjectURL(r.blob);
+    const w = window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 600000);
+    if (!w) { URL.revokeObjectURL(url); downloadPdf(); }
+  }
+  function downloadPdf() {
     const r = buildReport();
     if (!r) return;
     const url = URL.createObjectURL(r.blob);
@@ -1205,7 +1219,7 @@ button { cursor: pointer; }
     const msg = $("pdfMsg");
     msg.textContent = "Ladattu: " + r.fname + ". Jos latausta ei näy, avaa sivu Chrome- tai Safari-selaimessa.";
     msg.hidden = false;
-  });
+  }
 
   // Share sheet (WhatsApp, email…) only where the browser can share files.
   let canShareFiles = false;
@@ -1241,6 +1255,9 @@ button { cursor: pointer; }
   const appEl = document.querySelector(".app");
   function applyLayout() {
     const d = deskMQ.matches;
+    $("btnPdf").textContent = d ? "Avaa PDF-raportti" : "Lataa PDF-raportti";
+    $("btnDlPdf").hidden = !d;
+    $("btnSharePdf").hidden = d || !canShareFiles;
     if (d === isDesk) return;
     if (!modal.hidden) closeModal(true);
     if (!sheet.hidden) closeSheet();
